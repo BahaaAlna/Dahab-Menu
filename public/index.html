@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دهب | شاورما و جريل</title>
+
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap">
+
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/menu.css">
+</head>
+<body>
+
+  <div class="live-badge"><span class="dot"></span>مباشر</div>
+
+  <!-- ===== الواجهة ===== -->
+  <header class="hero">
+    <div class="hero-frame">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <img class="hero-logo" src="assets/img/logo.png" alt="دهب — شاورما و جريل">
+      <div class="hero-tag">طعم بيستاهل</div>
+      <div class="hero-divider"><span></span><i></i><span></span></div>
+    </div>
+    <div class="scroll-hint">القائمة ↓</div>
+  </header>
+
+  <!-- ===== القائمة (تُملأ من Firestore) ===== -->
+  <main class="menu-wrap" id="menuWrap">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top:20px;">جاري تحميل القائمة...</p>
+    </div>
+  </main>
+
+  <!-- ===== التواصل ===== -->
+  <section class="contact">
+    <div class="contact-frame">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="contact-title">تواصل معنا</div>
+      <div class="contact-row"><span class="ic">📍</span><span class="contact-loc">حماة - شارع أبي الفداء</span></div>
+      <div class="contact-row"><span class="ic">☎</span><a href="tel:013252542">013 25 25 042</a></div>
+      <div class="contact-row"><span class="ic">📱</span><a href="https://wa.me/963985393900">0985 39 39 00</a></div>
+      <div class="contact-row"><span class="ic">📱</span><a href="https://wa.me/963937282800">0937 28 28 00</a></div>
+    </div>
+  </section>
+
+  <footer>
+    دهب &mdash; شاورما و جريل &nbsp;•&nbsp; حماة <span class="heart">◆</span>
+  </footer>
+
+  <script type="module" src="assets/js/menu.js"></script>
+</body>
+</html>

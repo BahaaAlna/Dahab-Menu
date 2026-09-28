@@ -1,0 +1,15 @@
+{
+  "name": "dahab-menu",
+  "version": "2.0.0",
+  "description": "منيو رقمي مباشر لمطعم دهب — شاورما و جريل، مع لوحة إدارة تعمل على Firebase",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/dev-server.js",
+    "dev": "node scripts/dev-server.js --open",
+    "admin": "node scripts/dev-server.js --open admin.html",
+    "seed": "node scripts/dev-server.js --open tools/seed.html"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

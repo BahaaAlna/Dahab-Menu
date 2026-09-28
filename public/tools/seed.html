@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دهب | رفع البيانات الأولية</title>
+
+  <link rel="icon" href="../assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap">
+
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/tools.css">
+</head>
+<body>
+  <div class="tool-page">
+
+    <h1>🌯 رفع بيانات المنيو الأولية</h1>
+
+    <div class="warn">
+      ⚠️ <strong>هذه الصفحة تُستخدم مرة واحدة فقط</strong> لرفع كل الأصناف إلى Firebase.<br>
+      بعد ما تخلص، لازم تحذف مجلد <code>tools/</code> قبل النشر أو تحميه.
+    </div>
+
+    <p>الأصناف الجاهزة للرفع: <strong id="itemCount">—</strong> صنف موزعة على <strong id="secCount">—</strong> أقسام</p>
+
+    <div class="tool-actions">
+      <button class="btn" id="uploadBtn">🚀 رفع كل المنيو إلى Firebase</button>
+      <button class="btn danger" id="clearBtn">🗑️ حذف كل البيانات (للاختبار فقط)</button>
+    </div>
+
+    <div class="log" id="log"></div>
+
+  </div>
+
+  <script type="module" src="seed.js"></script>
+</body>
+</html>

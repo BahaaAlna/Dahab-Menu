@@ -1,0 +1,117 @@
+/* ===== هوية دهب: المتغيرات والأساسيات المشتركة ===== */
+:root {
+  --gold: #d4a849;
+  --gold-light: #f4d97a;
+  --gold-deep: #a67c2e;
+  --black: #0f0f0f;
+  --char: #1a1a1a;
+  --cream: #f5f0e6;
+  --red: #ef4444;
+  --green: #22c55e;
+}
+
+/* ===== تصفير وأساسيات ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Cairo',sans-serif;
+  background: var(--black);
+  color: var(--cream);
+  min-height: 100vh;
+}
+
+/* ===== الأزرار ===== */
+.btn {
+  background: linear-gradient(135deg,var(--gold),var(--gold-deep));
+  color: #000;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(212,168,73,0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn.full {
+  width: 100%;
+}
+
+.btn.danger {
+  background: linear-gradient(135deg,#ef4444,#991b1b);
+  color: #fff;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+.btn.small {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
+.err-msg {
+  color: var(--red);
+  margin-top: 12px;
+  font-size: 0.9rem;
+  min-height: 20px;
+}
+
+/* ===== مؤشر التحميل والحركات ===== */
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(212,168,73,0.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

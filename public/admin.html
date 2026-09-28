@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دهب | لوحة الإدارة</title>
+
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap">
+
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+
+  <!-- ===== شاشة الدخول ===== -->
+  <div class="login-wrap" id="loginWrap">
+    <div class="login-box">
+      <img class="login-logo" src="assets/img/logo.png" alt="دهب">
+      <div class="login-title">لوحة الإدارة</div>
+      <div class="login-sub">ADMIN PANEL</div>
+      <input type="password" class="login-input" id="pwInput" placeholder="كلمة السر" autocomplete="off">
+      <button class="btn full" id="loginBtn">دخول</button>
+      <div class="err-msg" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- ===== اللوحة ===== -->
+  <div class="admin" id="admin">
+
+    <div class="topbar">
+      <div class="topbar-brand">
+        <img src="assets/img/logo.png" alt="دهب">
+        <div>
+          <div class="name">دهب</div>
+          <div class="sub">ADMIN</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="live-indicator"><span class="dot"></span>مباشر</div>
+        <button class="btn ghost small" id="logoutBtn">خروج</button>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <!-- الإحصائيات -->
+      <div class="stats" id="stats">
+        <div class="stat"><div class="stat-val" id="statSections">0</div><div class="stat-lbl">قسم</div></div>
+        <div class="stat"><div class="stat-val" id="statItems">0</div><div class="stat-lbl">صنف</div></div>
+        <div class="stat"><div class="stat-val" id="statAvail">0</div><div class="stat-lbl">متوفر</div></div>
+        <div class="stat"><div class="stat-val" id="statOut">0</div><div class="stat-lbl">غير متوفر</div></div>
+      </div>
+
+      <!-- شريط الأدوات -->
+      <div class="toolbar">
+        <input type="text" class="search" id="search" placeholder="🔍 بحث عن صنف...">
+        <button class="btn ghost small" id="expandAll">فتح الكل</button>
+        <button class="btn ghost small" id="collapseAll">طي الكل</button>
+      </div>
+
+      <!-- قائمة الأقسام (تُملأ من Firestore) -->
+      <div id="sectionsList">
+        <div class="loading-full">
+          <div class="spinner"></div>
+          <p style="margin-top:16px;">جاري تحميل القائمة...</p>
+        </div>
+      </div>
+
+      <button class="add-section" id="addSectionBtn">+ إضافة قسم جديد</button>
+
+    </div>
+  </div>
+
+  <!-- ===== النوافذ المنبثقة ===== -->
+  <div class="modal-back" id="sectionModal">
+    <div class="modal">
+      <h3 id="secModalTitle">قسم جديد</h3>
+      <div class="field">
+        <label>اسم القسم</label>
+        <input type="text" id="secName" placeholder="مثلاً: مشروبات">
+      </div>
+      <div class="field">
+        <label>رمز (إيموجي اختياري)</label>
+        <input type="text" id="secIcon" placeholder="🥤" maxlength="4">
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" onclick="closeModal('sectionModal')">إلغاء</button>
+        <button class="btn" id="secSaveBtn">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-back" id="confirmModal">
+    <div class="modal">
+      <h3 id="confirmTitle">تأكيد</h3>
+      <p id="confirmMsg" style="color:var(--cream);opacity:0.9;margin-bottom:8px;"></p>
+      <div class="modal-actions">
+        <button class="btn ghost" onclick="closeModal('confirmModal')">إلغاء</button>
+        <button class="btn danger" id="confirmYesBtn">نعم، احذف</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">تم الحفظ</div>
+
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>

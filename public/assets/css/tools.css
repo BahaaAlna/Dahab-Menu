@@ -1,0 +1,58 @@
+/* ===== صفحات الأدوات (tools/) ===== */
+
+.tool-page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  line-height: 1.7;
+}
+
+.tool-page h1 {
+  font-family: 'Aref Ruqaa', serif;
+  color: var(--gold);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+.tool-page p {
+  margin-bottom: 14px;
+}
+
+.warn {
+  background: rgba(212, 168, 73, 0.08);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+}
+
+.tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.log {
+  background: var(--char);
+  border: 1px solid rgba(212, 168, 73, 0.25);
+  border-radius: 12px;
+  padding: 20px;
+  max-height: 420px;
+  overflow-y: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  direction: ltr;
+  text-align: left;
+}
+
+.log .ok   { color: #4ade80; }
+.log .err  { color: #f87171; }
+.log .info { color: #60a5fa; }

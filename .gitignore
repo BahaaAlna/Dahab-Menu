@@ -1,0 +1,10 @@
+# نسخة الإصدار القديم قبل إعادة الهيكلة — محلية فقط
+_backup/
+
+# نظام التشغيل والمحررات
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.vscode/
