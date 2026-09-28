@@ -1,5 +1,12 @@
-/* ===== هوية دهب: المتغيرات والأساسيات المشتركة ===== */
+/* ============================================================
+   🎨  هوية دهب البصرية — المصدر الوحيد للألوان والأشكال
+   كل صفحات المشروع (المنيو، لوحة الإدارة، الأدوات) تبني عليه،
+   فأي عنصر يطلع بنفس الشكل بالضبط في كل مكان.
+   ============================================================ */
+
 :root {
+
+  /* ---------- الألوان ---------- */
   --gold: #d4a849;
   --gold-light: #f4d97a;
   --gold-deep: #a67c2e;
@@ -8,9 +15,53 @@
   --cream: #f5f0e6;
   --red: #ef4444;
   --green: #22c55e;
+
+  /* ---------- درجات الخط الذهبي (بدل 16 درجة عشوائية) ---------- */
+  --line-faint: rgba(212, 168, 73, 0.15);  /* فواصل داخلية */
+  --line-soft: rgba(212, 168, 73, 0.25);   /* حدود البطاقات */
+  --line: rgba(212, 168, 73, 0.40);        /* حدود الحقول */
+  --line-strong: var(--gold);              /* الإطارات الرئيسية */
+
+  /* ---------- الأسطح ---------- */
+  --surface: linear-gradient(160deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  --surface-gold: linear-gradient(160deg, rgba(212, 168, 73, 0.06), rgba(0, 0, 0, 0.25));
+  --surface-sunken: rgba(0, 0, 0, 0.40);
+  --surface-header: linear-gradient(90deg, rgba(212, 168, 73, 0.10), transparent);
+  --wash-gold: rgba(212, 168, 73, 0.10);
+  --line-bright: rgba(212, 168, 73, 0.50);
+
+  /* ---------- خلفية الصفحة: نفس التوهّج والنسيج في كل الصفحات ---------- */
+  --bg-glow:
+    radial-gradient(circle at 20% 15%, rgba(212, 168, 73, 0.07), transparent 38%),
+    radial-gradient(circle at 80% 85%, rgba(212, 168, 73, 0.055), transparent 40%);
+  --bg-texture:
+    repeating-linear-gradient(45deg, rgba(212, 168, 73, 0.015) 0 2px, transparent 2px 28px),
+    repeating-linear-gradient(-45deg, rgba(212, 168, 73, 0.015) 0 2px, transparent 2px 28px);
+
+  /* ---------- الزوايا (سُلّم واحد بدل 8 قيم) ---------- */
+  --r-pill: 999px;
+  --r-2xs: 6px;   /* أصغر عنصر: أسهم السعر */
+  --r-xs: 10px;   /* أزرار صغيرة، شارات */
+  --r-sm: 12px;   /* حقول الإدخال */
+  --r-md: 16px;   /* الأزرار والبطاقات الداخلية */
+  --r-lg: 20px;   /* بطاقات الأقسام */
+  --r-xl: 24px;   /* الإطارات الرئيسية */
+
+  /* ---------- الظلال والتوهّج ---------- */
+  --glow-soft: 0 0 40px rgba(212, 168, 73, 0.10);
+  --glow: 0 0 60px rgba(212, 168, 73, 0.15);
+  --shade-inner: inset 0 0 40px rgba(0, 0, 0, 0.40);
+  --text-glow: 0 2px 10px rgba(212, 168, 73, 0.25);
+
+  /* ---------- الخطوط ---------- */
+  --font-body: 'Cairo', sans-serif;
+  --font-display: 'Aref Ruqaa', serif;
 }
 
-/* ===== تصفير وأساسيات ===== */
+/* ============================================================
+   تصفير وأساسيات
+   ============================================================ */
+
 * {
   margin: 0;
   padding: 0;
@@ -22,54 +73,426 @@ html {
 }
 
 body {
-  font-family: 'Cairo',sans-serif;
+  font-family: var(--font-body);
   background: var(--black);
   color: var(--cream);
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* ===== الأزرار ===== */
+/* توهّج ذهبي خافت — خلف كل الصفحات */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--bg-glow), var(--black);
+  z-index: -2;
+}
+
+/* نسيج قطري خفيف — بصمة دهب */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--bg-texture);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ============================================================
+   🖼️  الإطار الذهبي المزدوج — بصمة دهب
+   حدّ خارجي 2px + حدّ داخلي رفيع + توهّج. نفسه في المنيو واللوحة.
+   ============================================================ */
+
+.frame {
+  position: relative;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface-gold);
+  box-shadow: var(--glow), var(--shade-inner);
+}
+
+.frame::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(212, 168, 73, 0.30);
+  border-radius: var(--r-md);
+  pointer-events: none;
+}
+
+/* ---------- زخارف الأركان (الزوايا الذهبية) ---------- */
+
+.corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--gold);
+  pointer-events: none;
+}
+
+.corner.tl {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 var(--r-xl) 0 0;
+}
+
+.corner.tr {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: var(--r-xl) 0 0 0;
+}
+
+.corner.bl {
+  bottom: -2px;
+  right: -2px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 var(--r-xl) 0;
+}
+
+.corner.br {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 var(--r-xl);
+}
+
+/* الأركان على بطاقة أصغر — الحجم دائماً أكبر من نصف القطر وإلا انشوّه القوس */
+.corner.sm {
+  width: 22px;
+  height: 22px;
+  border-width: 1px;
+}
+
+.corner.sm.tl { top: -1px; right: -1px; border-radius: 0 var(--r-lg) 0 0; }
+.corner.sm.tr { top: -1px; left: -1px; border-radius: var(--r-lg) 0 0 0; }
+.corner.sm.bl { bottom: -1px; right: -1px; border-radius: 0 0 var(--r-lg) 0; }
+.corner.sm.br { bottom: -1px; left: -1px; border-radius: 0 0 0 var(--r-lg); }
+
+/* ============================================================
+   ◆  الفاصل الذهبي — خط متلاشٍ + معيّن في المنتصف
+   ============================================================ */
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.divider span {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+
+.divider span:last-child {
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.divider i {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   ⬤  الأيقونة الذهبية الدائرية
+   ============================================================ */
+
+.ic-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: var(--black);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   🏷️  الشارة (عدّاد / حالة مباشر)
+   ============================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-soft);
+  background: var(--wash-gold);
+  color: var(--gold-light);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+/* ============================================================
+   🔘  الأزرار
+   ============================================================ */
+
 .btn {
-  background: linear-gradient(135deg,var(--gold),var(--gold-deep));
-  color: #000;
-  border: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  color: var(--black);
+  border: 1px solid transparent;
   padding: 14px 32px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(212,168,73,0.3);
+  box-shadow: 0 6px 20px rgba(212, 168, 73, 0.30);
 }
 
 .btn:active {
   transform: translateY(0);
 }
 
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
 .btn.full {
   width: 100%;
 }
 
-.btn.danger {
-  background: linear-gradient(135deg,#ef4444,#991b1b);
-  color: #fff;
-}
-
 .btn.ghost {
   background: transparent;
-  border: 1px solid var(--gold);
+  border-color: var(--gold);
   color: var(--gold);
 }
 
-.btn.small {
-  padding: 8px 16px;
-  font-size: 0.85rem;
+.btn.ghost:hover {
+  background: var(--wash-gold);
 }
+
+.btn.danger {
+  background: linear-gradient(135deg, var(--red), #991b1b);
+  color: #fff;
+}
+
+.btn.small {
+  padding: 9px 18px;
+  font-size: 0.85rem;
+  border-radius: var(--r-sm);
+}
+
+/* زر الأيقونة — دائرة ذهبية مثل أيقونات التواصل في المنيو */
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--gold);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.icon-btn:hover {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--gold);
+}
+
+.icon-btn.del:hover {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+
+/* ============================================================
+   ✍️  حقول الإدخال
+   ============================================================ */
+
+.field-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+.field-input::placeholder {
+  color: rgba(245, 240, 230, 0.35);
+}
+
+/* ============================================================
+   🔢  حقل السعر بأسهم ذهبية
+   بديل أسهم المتصفح الرمادية — نفس الوظيفة بهوية دهب.
+   ============================================================ */
+
+.stepper {
+  position: relative;
+}
+
+.stepper .field-input {
+  padding-left: 34px;
+  text-align: center;
+}
+
+.stepper-btns {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stepper-btn {
+  width: 22px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2xs);
+  background: var(--wash-gold);
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.stepper-btn:hover {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--gold);
+}
+
+.stepper-btn:active {
+  transform: scale(0.9);
+}
+
+.stepper-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   🧩  العناصر الأصلية للمتصفح
+   هاي عناصر بيرسمها المتصفح بنمطه الرمادي الافتراضي وبتكسر
+   الهوية — منلغي نمطها ومنلبّسها ألوان دهب.
+   ============================================================ */
+
+/* ---------- أسهم الزيادة/النقصان في حقول الأرقام ----------
+   غير مفيدة لأسعار من 3-4 خانات، وشكلها رمادي خارج الهوية. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ---------- شريط التمرير ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: var(--r-pill);
+  border: 2px solid var(--black);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* ---------- تحديد النص ---------- */
+::selection {
+  background: var(--gold);
+  color: var(--black);
+}
+
+/* ---------- مؤشّر الكتابة ---------- */
+input,
+textarea {
+  caret-color: var(--gold);
+}
+
+/* ---------- الملء التلقائي (كروم بيحطّ خلفية صفراء) ---------- */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--cream);
+  -webkit-box-shadow: 0 0 0 1000px var(--char) inset;
+  caret-color: var(--gold);
+}
+
+/* ---------- حلقة التركيز للتنقّل بالكيبورد ---------- */
+.icon-btn:focus-visible,
+.add-section:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   رسائل الخطأ والتحميل والحركات
+   ============================================================ */
 
 .err-msg {
   color: var(--red);
@@ -78,40 +501,26 @@ body {
   min-height: 20px;
 }
 
-/* ===== مؤشر التحميل والحركات ===== */
 .spinner {
   display: inline-block;
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(212,168,73,0.2);
+  border: 3px solid rgba(212, 168, 73, 0.20);
   border-top-color: var(--gold);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -8,7 +8,7 @@
 }
 
 .tool-page h1 {
-  font-family: 'Aref Ruqaa', serif;
+  font-family: var(--font-display);
   color: var(--gold);
   font-size: 1.8rem;
   margin-bottom: 20px;
@@ -19,9 +19,9 @@
 }
 
 .warn {
-  background: rgba(212, 168, 73, 0.08);
+  background: var(--wash-gold);
   border: 1px solid var(--gold);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   padding: 16px 20px;
   margin: 20px 0;
 }
@@ -42,8 +42,8 @@
 
 .log {
   background: var(--char);
-  border: 1px solid rgba(212, 168, 73, 0.25);
-  border-radius: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
   padding: 20px;
   max-height: 420px;
   overflow-y: auto;

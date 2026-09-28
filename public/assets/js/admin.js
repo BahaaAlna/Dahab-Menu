@@ -8,7 +8,7 @@ import {
   collection, doc, setDoc, addDoc, deleteDoc, updateDoc,
   onSnapshot, query, orderBy, writeBatch,
 } from "./firebase.js";
-import { ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON } from "./config.js";
+import { ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON, PRICE_STEP } from "./config.js";
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -100,10 +100,18 @@ function itemRowHtml(item) {
   const off = item.available === false;
   const dim = off ? "unavailable" : "";
   return `<div class="item-row" data-id="${item.id}">
-        <input type="text" class="nm-input ${dim}" value="${escapeAttr(item.name)}"
+        <input type="text" class="field-input ${dim}" value="${escapeAttr(item.name)}"
                onchange="window.__updField('${item.id}','name',this.value)">
-        <input type="number" class="pr-input ${dim}" value="${item.price}"
-               onchange="window.__updField('${item.id}','price',Number(this.value))">
+        <div class="stepper">
+          <input type="number" class="field-input ${dim}" value="${item.price}" id="pr-${item.id}"
+                 onchange="window.__updField('${item.id}','price',Number(this.value))">
+          <span class="stepper-btns">
+            <button type="button" class="stepper-btn" title="زيادة"
+                    onclick="window.__stepPrice('${item.id}',1)">▲</button>
+            <button type="button" class="stepper-btn" title="نقصان"
+                    onclick="window.__stepPrice('${item.id}',-1)">▼</button>
+          </span>
+        </div>
         <div class="item-actions">
           <button class="icon-btn toggle-avail ${off ? "off" : ""}"
                   onclick="window.__toggleAvail('${item.id}')"
@@ -122,9 +130,9 @@ function sectionCardHtml(sec, secItems) {
         <div class="section-header-left">
           <span class="icon">${sec.icon || DEFAULT_ICON}</span>
           <span class="title">${escapeHtml(sec.name)}</span>
-          <span class="count">${secItems.length} صنف</span>
+          <span class="badge">${secItems.length} صنف</span>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div class="section-header-actions">
           <button class="icon-btn" onclick="event.stopPropagation();window.__editSec('${sec.id}')" title="تعديل">✎</button>
           <button class="icon-btn del" onclick="event.stopPropagation();window.__delSec('${sec.id}')" title="حذف">🗑</button>
           <span class="toggle">▾</span>
@@ -133,8 +141,16 @@ function sectionCardHtml(sec, secItems) {
       <div class="section-body">
         ${secItems.map(itemRowHtml).join("")}
         <div class="add-row">
-          <input type="text" placeholder="اسم صنف جديد..." id="new-nm-${sec.id}">
-          <input type="number" placeholder="السعر" id="new-pr-${sec.id}">
+          <input type="text" class="field-input" placeholder="اسم صنف جديد..." id="new-nm-${sec.id}">
+          <div class="stepper">
+            <input type="number" class="field-input" placeholder="السعر" id="new-pr-${sec.id}">
+            <span class="stepper-btns">
+              <button type="button" class="stepper-btn" title="زيادة"
+                      onclick="window.__stepInput('new-pr-${sec.id}',1)">▲</button>
+              <button type="button" class="stepper-btn" title="نقصان"
+                      onclick="window.__stepInput('new-pr-${sec.id}',-1)">▼</button>
+            </span>
+          </div>
           <button class="btn small" onclick="window.__addItem('${sec.id}')">+ إضافة</button>
         </div>
       </div>
@@ -183,6 +199,36 @@ window.__updField = async (itemId, field, value) => {
     toast("فشل الحفظ", true);
     console.error(e);
   }
+};
+
+/* حماية: في كروم، عجلة الفأرة بتغيّر قيمة حقل الرقم المركَّز — وبما إن
+   التغيير بينحفظ فوراً على Firestore، ممكن سعر ينتغيّر بالغلط.
+   منلغي التركيز عند أول سكرول. */
+document.addEventListener(
+  "wheel",
+  () => {
+    const el = document.activeElement;
+    if (el && el.type === "number") el.blur();
+  },
+  { passive: true }
+);
+
+/** زيادة/نقصان سعر صنف محفوظ — يحفظ مباشرة على Firestore */
+window.__stepPrice = (itemId, dir) => {
+  const item = items.find((x) => x.id === itemId);
+  if (!item) return;
+  const next = Math.max(0, (Number(item.price) || 0) + dir * PRICE_STEP);
+  if (next === item.price) return;
+  const el = $(`pr-${itemId}`);
+  if (el) el.value = next;
+  window.__updField(itemId, "price", next);
+};
+
+/** زيادة/نقصان قيمة حقل محلي (صف الإضافة) — بدون حفظ */
+window.__stepInput = (inputId, dir) => {
+  const el = $(inputId);
+  if (!el) return;
+  el.value = Math.max(0, (Number(el.value) || 0) + dir * PRICE_STEP);
 };
 
 window.__toggleAvail = async (itemId) => {

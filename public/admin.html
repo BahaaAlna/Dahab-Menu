@@ -17,11 +17,16 @@
 
   <!-- ===== شاشة الدخول ===== -->
   <div class="login-wrap" id="loginWrap">
-    <div class="login-box">
+    <div class="frame login-box">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+
       <img class="login-logo" src="assets/img/logo.png" alt="دهب">
       <div class="login-title">لوحة الإدارة</div>
       <div class="login-sub">ADMIN PANEL</div>
-      <input type="password" class="login-input" id="pwInput" placeholder="كلمة السر" autocomplete="off">
+      <div class="divider login-divider"><span></span><i></i><span></span></div>
+
+      <input type="password" class="field-input login-input" id="pwInput" placeholder="كلمة السر" autocomplete="off">
       <button class="btn full" id="loginBtn">دخول</button>
       <div class="err-msg" id="loginErr"></div>
     </div>
@@ -39,7 +44,7 @@
         </div>
       </div>
       <div class="topbar-actions">
-        <div class="live-indicator"><span class="dot"></span>مباشر</div>
+        <div class="badge"><span class="dot"></span>مباشر</div>
         <button class="btn ghost small" id="logoutBtn">خروج</button>
       </div>
     </div>
@@ -48,15 +53,39 @@
 
       <!-- الإحصائيات -->
       <div class="stats" id="stats">
-        <div class="stat"><div class="stat-val" id="statSections">0</div><div class="stat-lbl">قسم</div></div>
-        <div class="stat"><div class="stat-val" id="statItems">0</div><div class="stat-lbl">صنف</div></div>
-        <div class="stat"><div class="stat-val" id="statAvail">0</div><div class="stat-lbl">متوفر</div></div>
-        <div class="stat"><div class="stat-val" id="statOut">0</div><div class="stat-lbl">غير متوفر</div></div>
+        <div class="stat">
+          <span class="corner sm tl"></span><span class="corner sm tr"></span>
+          <span class="corner sm bl"></span><span class="corner sm br"></span>
+          <div class="stat-val" id="statSections">0</div>
+          <div class="divider"><span></span><i></i><span></span></div>
+          <div class="stat-lbl">قسم</div>
+        </div>
+        <div class="stat">
+          <span class="corner sm tl"></span><span class="corner sm tr"></span>
+          <span class="corner sm bl"></span><span class="corner sm br"></span>
+          <div class="stat-val" id="statItems">0</div>
+          <div class="divider"><span></span><i></i><span></span></div>
+          <div class="stat-lbl">صنف</div>
+        </div>
+        <div class="stat">
+          <span class="corner sm tl"></span><span class="corner sm tr"></span>
+          <span class="corner sm bl"></span><span class="corner sm br"></span>
+          <div class="stat-val" id="statAvail">0</div>
+          <div class="divider"><span></span><i></i><span></span></div>
+          <div class="stat-lbl">متوفر</div>
+        </div>
+        <div class="stat">
+          <span class="corner sm tl"></span><span class="corner sm tr"></span>
+          <span class="corner sm bl"></span><span class="corner sm br"></span>
+          <div class="stat-val" id="statOut">0</div>
+          <div class="divider"><span></span><i></i><span></span></div>
+          <div class="stat-lbl">غير متوفر</div>
+        </div>
       </div>
 
       <!-- شريط الأدوات -->
       <div class="toolbar">
-        <input type="text" class="search" id="search" placeholder="🔍 بحث عن صنف...">
+        <input type="text" class="field-input search" id="search" placeholder="🔍 بحث عن صنف...">
         <button class="btn ghost small" id="expandAll">فتح الكل</button>
         <button class="btn ghost small" id="collapseAll">طي الكل</button>
       </div>
@@ -76,30 +105,40 @@
 
   <!-- ===== النوافذ المنبثقة ===== -->
   <div class="modal-back" id="sectionModal">
-    <div class="modal">
+    <div class="frame modal">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+
       <h3 id="secModalTitle">قسم جديد</h3>
+      <div class="divider modal-divider"><span></span><i></i><span></span></div>
+
       <div class="field">
         <label>اسم القسم</label>
-        <input type="text" id="secName" placeholder="مثلاً: مشروبات">
+        <input type="text" class="field-input" id="secName" placeholder="مثلاً: مشروبات">
       </div>
       <div class="field">
         <label>رمز (إيموجي اختياري)</label>
-        <input type="text" id="secIcon" placeholder="🥤" maxlength="4">
+        <input type="text" class="field-input" id="secIcon" placeholder="🥤" maxlength="4">
       </div>
       <div class="modal-actions">
-        <button class="btn ghost" onclick="closeModal('sectionModal')">إلغاء</button>
-        <button class="btn" id="secSaveBtn">حفظ</button>
+        <button class="btn ghost small" onclick="closeModal('sectionModal')">إلغاء</button>
+        <button class="btn small" id="secSaveBtn">حفظ</button>
       </div>
     </div>
   </div>
 
   <div class="modal-back" id="confirmModal">
-    <div class="modal">
+    <div class="frame modal">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+
       <h3 id="confirmTitle">تأكيد</h3>
-      <p id="confirmMsg" style="color:var(--cream);opacity:0.9;margin-bottom:8px;"></p>
+      <div class="divider modal-divider"><span></span><i></i><span></span></div>
+
+      <p id="confirmMsg" style="color:var(--cream);opacity:0.9;text-align:center;"></p>
       <div class="modal-actions">
-        <button class="btn ghost" onclick="closeModal('confirmModal')">إلغاء</button>
-        <button class="btn danger" id="confirmYesBtn">نعم، احذف</button>
+        <button class="btn ghost small" onclick="closeModal('confirmModal')">إلغاء</button>
+        <button class="btn danger small" id="confirmYesBtn">نعم، احذف</button>
       </div>
     </div>
   </div>
