@@ -32,3 +32,20 @@ export const PRICE_STEP = 50;
 
 /** الرمز الافتراضي للقسم إذا ما تم اختيار واحد */
 export const DEFAULT_ICON = "🍽️";
+
+/** حالات الطلب — المفتاح هو يلي بينخزن بـ Firestore،
+ *  والنص هو يلي بيشوفه الزبون بصفحة «طلباتي».
+ *  أي حالة مو موجودة هون بتنعرض كما هي بدون لون خاص. */
+export const ORDER_STATUS = {
+  new:       { label: "عم نراجع طلبك", tone: "wait" },
+  confirmed: { label: "تأكد الطلب",    tone: "ok" },
+  preparing: { label: "عم نجهّزه",      tone: "ok" },
+  on_way:    { label: "بالطريق إلك",   tone: "go" },
+  delivered: { label: "وصل",           tone: "done" },
+  cancelled: { label: "ملغي",          tone: "bad" },
+};
+
+/** وثيقة المنيو المجمّعة يلي يقراها الزباين.
+ *  قراءة واحدة بدل ٨٨ — هي يلي بتخلي المشروع بالخطة المجانية.
+ *  الداشبورد يكتبها تلقائياً عند أي تعديل. */
+export const PUBLIC_MENU = { collection: "menu_public", doc: "current" };

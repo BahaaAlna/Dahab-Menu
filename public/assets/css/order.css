@@ -1,0 +1,648 @@
+/* ============================================================
+   🛵  صفحة طلب الدليفري
+   بتبني على base.css و menu.css — هون بس يلي خاص بالطلب:
+   أيقونة الحساب العائمة، أزرار الكمية، شريط السلة، النوافذ.
+   ============================================================ */
+
+/* عنصر عليه hidden لازم يختفي حتى لو عطيناه display تحت —
+   بدون هالسطر، display:flex بيغلب خاصية hidden ويبين الاتنين. */
+[hidden] {
+  display: none !important;
+}
+
+/* ============================================================
+   👤  أيقونة الحساب — عائمة فوق على الشمال
+   مقابل زر «رجوع» يلي فوق على اليمين، بنفس الحجم والروح.
+   ============================================================ */
+
+.profile-btn {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--line-soft);
+  background: rgba(15, 15, 15, 0.72);
+  backdrop-filter: blur(8px);
+  color: var(--gold);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.profile-btn .ic {
+  width: 20px;
+  height: 20px;
+}
+
+/* مسجّل دخول: دائرة ذهبية مليانة فيها أول حرف من اسمه */
+.profile-btn.is-in {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+.profile-initial {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.profile-btn:active {
+  transform: scale(0.94);
+}
+
+.profile-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .profile-btn:hover {
+    border-color: var(--gold);
+    background: var(--wash-gold);
+  }
+
+  .profile-btn.is-in:hover {
+    background: var(--gold-light);
+  }
+}
+
+/* ============================================================
+   رأس الصفحة
+   ============================================================ */
+
+.order {
+  padding: 70px 16px 110px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.order-intro {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.order-title {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--gold);
+  text-shadow: var(--text-glow);
+}
+
+.order-sub {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+/* ============================================================
+   أزرار الكمية داخل صفوف المنيو
+   ============================================================ */
+
+.order-menu .item {
+  align-items: center;
+}
+
+/* بصفحة الطلب في زر كمية زيادة بكل صف، فأطول الأسماء
+   ما عاد يضّل إلها محل على عرض الموبايل. منخلي الاسم يلف
+   بدل ما يمدّد الصف ويفتح تمرير أفقي بالصفحة كلها.
+   (min-width:0 ضروري — بدونه عنصر flex ما بيصغّر عن محتواه) */
+.order-menu .item-name {
+  white-space: normal;
+  min-width: 0;
+}
+
+.order-menu .item-dots {
+  min-width: 14px;
+}
+
+.order-menu .item.in-cart {
+  background: var(--wash-gold);
+  border-radius: var(--r-xs);
+  margin: 0 -10px;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.qty-add,
+.qty-btn {
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--gold);
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+/* هدف لمس 34px — أصغر من هيك بيصير صعب بالموبايل */
+.qty-add {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.qty-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-xs);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.qty-num {
+  min-width: 22px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+.qty-add:active,
+.qty-btn:active {
+  transform: scale(0.92);
+}
+
+.qty-add:focus-visible,
+.qty-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .qty-add:hover,
+  .qty-btn:hover {
+    background: var(--gold);
+    color: var(--black);
+    border-color: var(--gold);
+  }
+}
+
+/* ============================================================
+   شريط السلة — ثابت تحت
+   ============================================================ */
+
+/* الرصيف السفلي — بيلم التنبيه وشريط السلة فوق بعض،
+   فالتنبيه دائماً بيطلع فوق الشريط مهما تغيّر ارتفاعه.
+   pointer-events مطفية عالحاوية حتى ما تحجب اللمس على
+   المنيو وقت الاتنين مخفيين. */
+.bottom-dock {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.bottom-dock > * {
+  pointer-events: auto;
+}
+
+/* ---------- تنبيه: انشال صنف من السلة ---------- */
+
+.cart-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(26, 26, 26, 0.96);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--glow-soft);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--cream);
+  animation: noteUp 0.25s ease both;
+}
+
+@keyframes noteUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cart-note-x {
+  margin-right: auto;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(245, 240, 230, 0.55);
+  font-family: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cart-note-x:hover {
+  background: var(--wash-gold);
+  color: var(--gold);
+}
+
+.cart-note-x:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+.cart-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: rgba(15, 15, 15, 0.92);
+  backdrop-filter: blur(10px);
+  animation: cartUp 0.25s ease both;
+}
+
+@keyframes cartUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.cart-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cart-count {
+  font-size: 0.82rem;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.cart-total {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+/* ============================================================
+   النوافذ — تسجيل، حساب، تأكيد، تم
+   ============================================================ */
+
+.co-dialog {
+  border: none;
+  background: transparent;
+  padding: 0;
+  max-width: 440px;
+  width: calc(100% - 32px);
+}
+
+.co-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.co-box {
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--char);
+  box-shadow: var(--glow);
+  padding: 26px 22px;
+  color: var(--cream);
+}
+
+.co-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+/* ---------- نافذة التسجيل ---------- */
+
+/* بتبين بس لما نفتح النافذة من «إتمام الطلب» — تشرح ليش
+   طلبنا منه يسجّل بهاللحظة بالذات. */
+.auth-why {
+  margin: -8px 0 18px;
+  text-align: center;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 4px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: rgba(245, 240, 230, 0.55);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab.is-on {
+  background: var(--wash-gold);
+  color: var(--gold-light);
+}
+
+.tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+.gate-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.lbl {
+  margin-bottom: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+.lbl small {
+  font-weight: 400;
+  color: rgba(245, 240, 230, 0.45);
+}
+
+.gate-form .field-input {
+  margin-bottom: 16px;
+}
+
+/* الرقم والسر دائماً يسار-لليمين حتى لو الصفحة عربية */
+#loginPhone, #suPhone, #loginPw, #suPw {
+  direction: ltr;
+  text-align: right;
+}
+
+#authCloseBtn {
+  margin-top: 14px;
+}
+
+/* ---------- نافذة الحساب ---------- */
+
+.acc-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.acc-avatar {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: var(--black);
+}
+
+.acc-avatar .ic {
+  width: 24px;
+  height: 24px;
+}
+
+.acc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.acc-text strong {
+  font-size: 1.05rem;
+  color: var(--cream);
+}
+
+.acc-text small {
+  direction: ltr;
+  text-align: right;
+  font-size: 0.85rem;
+  color: rgba(245, 240, 230, 0.50);
+}
+
+.acc-addr {
+  margin: 16px 0 4px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(245, 240, 230, 0.65);
+}
+
+/* ---------- نافذة التأكيد ---------- */
+
+.co-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 34vh;
+  overflow-y: auto;
+  margin-bottom: 18px;
+}
+
+.co-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.co-line b {
+  color: var(--gold-light);
+}
+
+.co-line span:last-child {
+  color: var(--gold-light);
+  white-space: nowrap;
+}
+
+.co-dialog .lbl {
+  display: block;
+  margin-top: 16px;
+}
+
+.co-total {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+.co-total strong {
+  font-size: 1.3rem;
+  color: var(--gold-light);
+}
+
+.co-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* ---------- تم الإرسال ---------- */
+
+.done-box {
+  text-align: center;
+}
+
+.done-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: var(--wash-gold);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-size: 1.7rem;
+}
+
+.done-sub {
+  margin: 10px 0 22px;
+  font-size: 0.95rem;
+  color: rgba(245, 240, 230, 0.65);
+}
+
+/* ============================================================
+   📜  طلباتي — بطاقة لكل طلب مع حالته
+   ============================================================ */
+
+.ord-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* القائمة لحالها بتمرّق، فزر «تمام» بيضل مبيّن تحت */
+  max-height: 56vh;
+  overflow-y: auto;
+  margin-bottom: 18px;
+}
+
+.ord {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  padding: 14px;
+}
+
+.ord-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ord-when {
+  font-size: 0.82rem;
+  color: rgba(245, 240, 230, 0.55);
+}
+
+/* شارة الحالة — اللون بيجي من tone بـ config.js */
+.ord-state {
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ord-state.is-wait { color: var(--gold); }
+.ord-state.is-ok   { color: var(--gold-light); }
+.ord-state.is-go   { color: var(--gold-light); background: var(--wash-gold); }
+.ord-state.is-done { color: var(--green); }
+.ord-state.is-bad  { color: var(--red); }
+
+.ord-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ord-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.ord-line b {
+  color: var(--gold-light);
+}
+
+.ord-line span:last-child {
+  color: var(--gold-light);
+  white-space: nowrap;
+}
+
+.ord-note {
+  margin-top: 10px;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: rgba(245, 240, 230, 0.55);
+}
+
+.ord-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-faint);
+  font-size: 0.88rem;
+}
+
+.ord-foot strong {
+  font-size: 1.05rem;
+  color: var(--gold-light);
+}
+
+/* ---------- ما في طلبات / صار خطأ ---------- */
+
+.ord-empty,
+.ord-err {
+  padding: 26px 10px;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.ord-err {
+  color: #f87171;
+}

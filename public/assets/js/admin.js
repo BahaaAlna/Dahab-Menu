@@ -8,7 +8,7 @@ import {
   collection, doc, setDoc, addDoc, deleteDoc, updateDoc,
   onSnapshot, query, orderBy, writeBatch,
 } from "./firebase.js";
-import { ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON, PRICE_STEP } from "./config.js";
+import { ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON, PRICE_STEP, PUBLIC_MENU } from "./config.js";
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -68,17 +68,24 @@ let items = [];
 let searchTerm = "";
 const collapsedSections = new Set();
 
+let sectionsReady = false;
+let itemsReady = false;
+
 function startListening() {
   onSnapshot(
     query(collection(db, COLLECTIONS.sections), orderBy("order")),
     (snap) => {
       sections = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      sectionsReady = true;
       render();
+      scheduleAggregateWrite();
     }
   );
   onSnapshot(collection(db, COLLECTIONS.items), (snap) => {
     items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    itemsReady = true;
     render();
+    scheduleAggregateWrite();
   });
 }
 
@@ -424,4 +431,48 @@ function toast(msg, isErr = false) {
   toastEl.className = "toast " + (isErr ? "err " : "") + "show";
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toastEl.classList.remove("show"), 2200);
+}
+
+
+/* ============================================================
+   8. النسخة المجمّعة للزبائن
+
+   صفحة المنيو تقرأ وثيقة واحدة (menu_public/current) بدل ما
+   تقرأ ٨٨ وثيقة لكل زبون. منعيد كتابتها من هون بعد أي تعديل،
+   لأن الداشبورد هو المكان الوحيد يلي ينكتب منه المنيو.
+
+   التأجيل ١٢٠٠ مللي ثانية حتى تعديلات متتابعة (مثلاً حذف قسم
+   مع أصنافه) تطلع بكتبة واحدة بدل عشرات.
+   ============================================================ */
+
+let aggTimer = null;
+
+function scheduleAggregateWrite() {
+  if (!sectionsReady || !itemsReady) return;
+  clearTimeout(aggTimer);
+  aggTimer = setTimeout(writeAggregate, 1200);
+}
+
+async function writeAggregate() {
+  try {
+    await setDoc(doc(db, PUBLIC_MENU.collection, PUBLIC_MENU.doc), {
+      sections: [...sections].sort(byOrder).map((s) => ({
+        id: s.id,
+        name: s.name,
+        icon: s.icon || DEFAULT_ICON,
+        order: s.order || 0,
+      })),
+      items: [...items].sort(byOrder).map((i) => ({
+        sectionId: i.sectionId,
+        name: i.name,
+        price: i.price,
+        order: i.order || 0,
+        available: i.available !== false,
+      })),
+      updatedAt: Date.now(),
+    });
+  } catch (e) {
+    // ما منزعج الموظف — المنيو عنده صح، بس النسخة المجمّعة تأخرت
+    console.error("فشل تحديث النسخة المجمّعة:", e);
+  }
 }

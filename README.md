@@ -16,7 +16,8 @@ npm start
 
 | الصفحة | الرابط |
 |---|---|
-| 🍽️ المنيو | http://localhost:3000/ |
+| 👋 صفحة الترحيب | http://localhost:3000/ |
+| 🍽️ المنيو | http://localhost:3000/menu.html |
 | 🛠️ لوحة الإدارة | http://localhost:3000/admin.html |
 | 🌱 رفع البيانات الأولية | http://localhost:3000/tools/seed.html |
 
@@ -44,12 +45,15 @@ Dahab-Menu/
 │   └── dev-server.js         سيرفر محلي بدون أي مكتبات
 │
 ├── public/                   ← كل ما يُنشر على الويب
-│   ├── index.html            المنيو (للزبائن)
+│   ├── index.html            صفحة الترحيب — أول شي يشوفه الزبون
+│   ├── menu.html             المنيو (استعراض)
+│   ├── CNAME                 الدومين المخصص
 │   ├── admin.html            لوحة الإدارة
 │   │
 │   ├── assets/
 │   │   ├── css/
 │   │   │   ├── base.css      الألوان والخطوط والأزرار (مشترك)
+│   │   │   ├── welcome.css   تنسيق صفحة الترحيب
 │   │   │   ├── menu.css      تنسيق المنيو
 │   │   │   ├── admin.css     تنسيق اللوحة
 │   │   │   └── tools.css     تنسيق صفحات الأدوات
@@ -57,6 +61,7 @@ Dahab-Menu/
 │   │   │   ├── config.js     ⚙️ الإعدادات — عدّل هنا فقط
 │   │   │   ├── firebase.js   🔥 الاتصال بـ Firebase
 │   │   │   ├── utils.js      🧰 دوال مساعدة مشتركة
+│   │   │   ├── welcome.js    منطق صفحة الترحيب
 │   │   │   ├── menu.js       منطق المنيو
 │   │   │   └── admin.js      منطق لوحة الإدارة
 │   │   └── img/
@@ -84,7 +89,7 @@ Dahab-Menu/
 | بيانات Firebase | `public/assets/js/config.js` |
 | العملة / رمز القسم الافتراضي | `public/assets/js/config.js` |
 | الألوان والخطوط | `public/assets/css/base.css` |
-| أرقام الهاتف والعنوان | `public/index.html` |
+| أرقام الهاتف والعنوان | `public/menu.html` |
 | اللوغو | استبدل `public/assets/img/logo.png` |
 
 ---
