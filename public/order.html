@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/menu.css">
   <link rel="stylesheet" href="assets/css/order.css">
+  <link rel="stylesheet" href="assets/css/account.css">
 </head>
 <body>
 
@@ -81,7 +82,7 @@
 
       <!-- تسجيل الدخول -->
       <form class="gate-form" id="loginForm">
-        <label class="lbl" for="loginPhone">رقم الموبايل</label>
+        <label class="lbl" for="loginPhone">رقم الهاتف</label>
         <input class="field-input" id="loginPhone" type="tel" inputmode="numeric"
                autocomplete="tel" placeholder="09xxxxxxxx" required>
 
@@ -98,7 +99,7 @@
         <input class="field-input" id="suName" type="text" autocomplete="name"
                placeholder="الاسم الكامل" maxlength="60" required>
 
-        <label class="lbl" for="suPhone">رقم الموبايل</label>
+        <label class="lbl" for="suPhone">رقم الهاتف</label>
         <input class="field-input" id="suPhone" type="tel" inputmode="numeric"
                autocomplete="tel" placeholder="09xxxxxxxx" required>
 
@@ -115,50 +116,6 @@
     </div>
   </dialog>
 
-  <!-- ===== نافذة الحساب بعد تسجيل الدخول ===== -->
-  <dialog class="co-dialog" id="accountDialog" aria-labelledby="accTitle">
-    <div class="co-box">
-      <h2 class="co-title" id="accTitle">حسابك</h2>
-
-      <div class="acc-who">
-        <span class="acc-avatar" aria-hidden="true">
-          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#user"></use></svg>
-        </span>
-        <span class="acc-text">
-          <strong id="accName">—</strong>
-          <small id="accPhone"></small>
-        </span>
-      </div>
-
-      <div class="divider"><span></span><i></i><span></span></div>
-
-      <p class="acc-addr" id="accAddr" hidden></p>
-
-      <div class="co-actions">
-        <button class="btn full" type="button" id="myOrdersBtn">طلباتي</button>
-        <button class="btn ghost full" type="button" id="accCloseBtn">تمام</button>
-        <button class="btn ghost full" type="button" id="logoutBtn">تسجيل الخروج</button>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- ===== طلباتي — حالة كل طلب، تتحدّث تلقائياً =====
-       يسأل الزبون «أين وصل طلبي؟»، وهنا يجد الجواب دون أن يتصل.
-       تتغيّر الحالة من لوحة الإدارة وتصل إلى هنا فوراً. -->
-  <dialog class="co-dialog" id="ordersDialog" aria-labelledby="ordTitle">
-    <div class="co-box">
-      <h2 class="co-title" id="ordTitle">طلباتي</h2>
-
-      <div class="ord-list" id="ordList">
-        <div class="loading"><div class="spinner"></div></div>
-      </div>
-
-      <div class="co-actions">
-        <button class="btn full" type="button" id="ordCloseBtn">تمام</button>
-      </div>
-    </div>
-  </dialog>
-
   <!-- ===== نافذة التأكيد ===== -->
   <dialog class="co-dialog" id="checkoutDialog" aria-labelledby="coTitle">
     <form method="dialog" class="co-box" id="checkoutForm">
@@ -169,6 +126,11 @@
       <div class="divider"><span></span><i></i><span></span></div>
 
       <label class="lbl" for="coAddress">العنوان</label>
+
+      <!-- عناوين الزبون المحفوظة، والافتراضي محدَّد سلفاً.
+           تُرسَم من order.js، وتختفي إن لم يكن له عنوان بعد. -->
+      <div class="co-addr-list" id="coAddrChoices" hidden></div>
+
       <input class="field-input" id="coAddress" type="text" maxlength="200"
              placeholder="الحي والشارع وأقرب نقطة دالّة" required>
 
@@ -190,7 +152,7 @@
   <dialog class="co-dialog" id="doneDialog" aria-labelledby="doneTitle">
     <div class="co-box done-box">
       <span class="done-mark" aria-hidden="true">✓</span>
-      <h2 class="co-title" id="doneTitle">وصلنا طلبك</h2>
+      <h2 class="co-title" id="doneTitle">تسلّمنا طلبك</h2>
       <p class="done-sub">
         سنتصل بك لتأكيد الطلب وموعد التسليم،
         ويمكنك متابعة حالته من «طلباتي».
@@ -198,7 +160,7 @@
 
       <div class="co-actions">
         <button class="btn full" type="button" id="doneTrackBtn">متابعة الطلب</button>
-        <button class="btn ghost full" type="button" id="doneBtn">تمام</button>
+        <button class="btn ghost full" type="button" id="doneBtn">حسناً</button>
       </div>
     </div>
   </dialog>

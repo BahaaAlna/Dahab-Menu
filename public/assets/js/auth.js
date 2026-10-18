@@ -1,13 +1,13 @@
 /* ============================================================
-   🔑  حساب الزبون — رقم الموبايل وكلمة المرور
+   🔑  حساب الزبون — رقم الهاتف وكلمة المرور
 
    لا تتوفّر لدينا واجهة لإرسال الرسائل القصيرة، فلا يمكن استعمال
    تحقّق Firebase عبر SMS لأنه يتطلّب خطة مدفوعة. والحل أن يكون
-   رقم الموبايل هو اسم المستخدم، ويُركَّب له بريد داخلي شكلي:
+   رقم الهاتف هو اسم المستخدم، ويُركَّب له بريد داخلي شكلي:
 
         0912345678  →  963912345678@dahab.local
 
-   لا يرى الزبون هذا البريد إطلاقاً، فهو لا يرى سوى «رقم الموبايل»
+   لا يرى الزبون هذا البريد إطلاقاً، فهو لا يرى سوى «رقم الهاتف»
    و«كلمة المرور». أما Firebase فيتعامل معه كحساب بريد وكلمة مرور
    عادي، وبذلك نحصل على تسجيل دخول حقيقي ومجاني دون أي خدمة خارجية.
 
@@ -25,6 +25,15 @@ import {
   setPersistence,
   browserLocalPersistence,
 } from "./firebase.js";
+import { IS_LOCAL } from "./dev-mode.js";
+import * as local from "./local-auth.js";
+import { newProfile } from "./profile-data.js";
+
+/* ---------- أثناء التطوير ----------
+   على العنوان المحلي تُنفَّذ العمليات كلها في مخزن المتصفح بدل
+   Firebase، فتُجرَّب واجهات الحساب دون إنترنت ودون أي تحقّق.
+   الواجهة والأخطاء المعروضة هي ذاتها، والمتغيّر مصدر البيانات.
+   أما على الموقع المنشور فلا يتبدّل شيء. */
 
 /** النطاق الشكلي — غير موجود ولا يُرسَل إليه شيء، وهو مفتاح داخلي فقط */
 const FAKE_DOMAIN = "dahab.local";
@@ -47,7 +56,7 @@ export function normalizePhone(raw) {
 
   if (d.startsWith("0")) d = d.slice(1);
 
-  // رقم الموبايل السوري: تسع خانات تبدأ بالرقم 9
+  // رقم الهاتف السوري: تسع خانات تبدأ بالرقم 9
   return /^9\d{8}$/.test(d) ? "963" + d : null;
 }
 
@@ -91,17 +100,18 @@ export async function signUp({ phone, name, password }) {
   const canonical = normalizePhone(phone);
   if (!canonical) throw { code: "dahab/bad-phone" };
 
+  if (IS_LOCAL) return local.signUp({ canonical, name, password });
+
   await setPersistence(auth, browserLocalPersistence);
   const cred = await createUserWithEmailAndPassword(
     auth, emailFor(canonical), password
   );
 
-  // ملف الزبون — الاسم والرقم جاهزان للطلب التالي
-  await setDoc(doc(db, CUSTOMERS, cred.user.uid), {
-    name: String(name).trim(),
+  // ملف الزبون — الاسم والرقم جاهزان، والعناوين تُضاف لاحقاً
+  await setDoc(doc(db, CUSTOMERS, cred.user.uid), newProfile({
+    name,
     phone: canonical,
-    address: "",
-  });
+  }));
 
   return cred.user;
 }
@@ -111,6 +121,8 @@ export async function signIn({ phone, password }) {
   const canonical = normalizePhone(phone);
   if (!canonical) throw { code: "dahab/bad-phone" };
 
+  if (IS_LOCAL) return local.signIn({ canonical, password });
+
   await setPersistence(auth, browserLocalPersistence);
   const cred = await signInWithEmailAndPassword(
     auth, emailFor(canonical), password
@@ -119,21 +131,26 @@ export async function signIn({ phone, password }) {
 }
 
 export function logOut() {
+  if (IS_LOCAL) return local.logOut();
   return signOut(auth);
 }
 
 /** ينادي cb بالمستخدم الحالي (أو null) وعند كل تغيّر في الحالة */
 export function onUser(cb) {
+  if (IS_LOCAL) return local.onUser(cb);
   return onAuthStateChanged(auth, cb);
 }
 
 /** ملف الزبون المخزَّن — الاسم والعنوان لتعبئة الطلب */
 export async function loadProfile(uid) {
+  if (IS_LOCAL) return local.loadProfile(uid);
+
   const snap = await getDoc(doc(db, CUSTOMERS, uid));
   return snap.exists() ? snap.data() : null;
 }
 
 /** يُحدَّث العنوان بعد أول طلب، فيأتي الطلب التالي معبّأً */
 export function saveProfile(uid, data) {
+  if (IS_LOCAL) return local.saveProfile(uid, data);
   return setDoc(doc(db, CUSTOMERS, uid), data, { merge: true });
 }

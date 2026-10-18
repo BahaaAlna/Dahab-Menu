@@ -12,11 +12,6 @@ export const firebaseConfig = {
   appId: "1:67793665080:web:3160688f3e58c2369d3acd",
 };
 
-/** كلمة مرور لوحة الإدارة.
- *  ⚠️ هذه حماية شكلية فقط، إذ يستطيع أي زائر قراءتها من الكود.
- *  ويجب أن تكون الحماية الحقيقية عبر Firestore Rules. */
-export const ADMIN_PASSWORD = "dahab2026";
-
 /** أسماء المجموعات في Firestore */
 export const COLLECTIONS = {
   sections: "menu_sections",

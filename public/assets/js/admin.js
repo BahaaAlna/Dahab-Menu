@@ -4,14 +4,16 @@
    ============================================================ */
 
 import {
-  db, auth, signInAnonymously,
+  db, auth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+  setPersistence, browserLocalPersistence,
   collection, doc, setDoc, addDoc, deleteDoc, updateDoc,
   onSnapshot, query, orderBy, writeBatch,
 } from "./firebase.js";
 import {
-  ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON, PRICE_STEP,
+  COLLECTIONS, DEFAULT_ICON, PRICE_STEP,
   PUBLIC_MENU, FEATURE_FLAGS,
 } from "./config.js";
+import { authErrorMessage } from "./auth.js";
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -20,47 +22,113 @@ const $ = (id) => document.getElementById(id);
    1. تسجيل الدخول
    ============================================================ */
 
-const SESSION_KEY = "dahab_admin";
+/* ---------- من يدخل اللوحة؟ ----------
+   كانت كلمة المرور مكتوبة في config.js ويُدخَل بـ signInAnonymously،
+   وهذه حماية شكلية: الموقع ملفات ساكنة، فأي زائر يقرأ الكلمة من
+   الكود. والأهمّ أن قواعد Firestore تعرّف الموظف بـ UID محدَّد،
+   والمستخدم المجهول ليس ذلك الـ UID، فلا كتابة له بعد رفع القواعد.
+
+   لذلك صار الدخول بحساب موظف حقيقي من Firebase Authentication،
+   وهو الحساب نفسه الذي وُضع UID له في isStaff() داخل
+   firestore.rules. ولم يبقَ في الكود أي سرّ. */
+
 const loginWrap = $("loginWrap");
 const adminEl = $("admin");
+const emailInput = $("emailInput");
 const pwInput = $("pwInput");
 const loginErr = $("loginErr");
 
+let panelOpen = false;
+
 function openPanel() {
+  if (panelOpen) return;
+  panelOpen = true;
+
   loginWrap.style.display = "none";
   adminEl.classList.add("active");
   startListening();
 }
 
-function tryLogin() {
-  if (pwInput.value !== ADMIN_PASSWORD) {
-    loginErr.textContent = "كلمة المرور غير صحيحة";
-    pwInput.value = "";
-    setTimeout(() => (loginErr.textContent = ""), 2500);
+function showLogin() {
+  panelOpen = false;
+  loginWrap.style.display = "";
+  adminEl.classList.remove("active");
+}
+
+/* تُحفظ الجلسة بين الزيارات، فلا يُعاد تسجيل الدخول في كل مرة.
+   وتُضبَط قبل أي تسجيل دخول لا بعده. */
+setPersistence(auth, browserLocalPersistence).catch((e) =>
+  console.error("persistence error:", e)
+);
+
+/* رسائل auth.js مكتوبة للزبون الذي يدخل برقم هاتفه، أما الموظف
+   فيدخل ببريد، فتُصحَّح الصيغة هنا ويُترك الباقي لها. */
+const LOGIN_MESSAGES = {
+  "auth/invalid-credential": "البريد أو كلمة المرور غير صحيحة.",
+  "auth/invalid-login-credentials": "البريد أو كلمة المرور غير صحيحة.",
+  "auth/user-not-found": "لا يوجد حساب موظف بهذا البريد.",
+  "auth/invalid-email": "صيغة البريد غير صحيحة.",
+  "auth/user-disabled": "هذا الحساب موقوف.",
+};
+
+function loginErrorMessage(err) {
+  return LOGIN_MESSAGES[err?.code] || authErrorMessage(err);
+}
+
+async function tryLogin() {
+  const email = emailInput.value.trim();
+  const password = pwInput.value;
+  loginErr.textContent = "";
+
+  if (!email || !password) {
+    loginErr.textContent = "يُرجى إدخال البريد وكلمة المرور.";
     return;
   }
-  sessionStorage.setItem(SESSION_KEY, "1");
-  signInAnonymously(auth)
-    .then(openPanel)
-    .catch((e) => {
-      loginErr.textContent =
-        "تعذّر الاتصال بـ Firebase. يُرجى التأكد من تفعيل Anonymous Authentication.";
-      console.error(e);
-    });
+
+  const btn = $("loginBtn");
+  btn.disabled = true;
+  btn.textContent = "يُرجى الانتظار...";
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    pwInput.value = "";
+    // فتح اللوحة يتولّاه onAuthStateChanged أدناه
+  } catch (err) {
+    console.error("admin login error:", err);
+    loginErr.textContent = loginErrorMessage(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "تسجيل الدخول";
+  }
 }
 
 $("loginBtn").addEventListener("click", tryLogin);
 pwInput.addEventListener("keydown", (e) => e.key === "Enter" && tryLogin());
+emailInput.addEventListener("keydown", (e) => e.key === "Enter" && pwInput.focus());
 
-$("logoutBtn").addEventListener("click", () => {
-  sessionStorage.removeItem(SESSION_KEY);
+$("logoutBtn").addEventListener("click", async () => {
+  await signOut(auth).catch((e) => console.error("sign out error:", e));
   location.reload();
 });
 
-// دخول تلقائي في حال كانت الجلسة ما زالت مفتوحة
-if (sessionStorage.getItem(SESSION_KEY) === "1") {
-  signInAnonymously(auth).then(openPanel);
-}
+/* الجلسة المحفوظة تُستعاد من تخزين المتصفح دون نداء شبكة، فتُفتح
+   اللوحة فوراً. ولا تُعرَض شاشة الدخول إلا إذا لم تكن ثمّة جلسة.
+
+   والمستخدم المجهول لا يُقبَل هنا: قد تبقى في المتصفح جلسة مجهولة
+   قديمة من النسخة السابقة من اللوحة، وهي ليست حساب موظف ولا تملك
+   صلاحية الكتابة. تُنهى صراحةً كي لا تفتح اللوحة على فراغ. */
+onAuthStateChanged(auth, (user) => {
+  if (user && !user.isAnonymous) {
+    openPanel();
+    return;
+  }
+
+  if (user?.isAnonymous) {
+    signOut(auth).catch((e) => console.error("stale session error:", e));
+  }
+
+  showLogin();
+});
 
 /* ============================================================
    2. البيانات — استماع مباشر لـ Firestore

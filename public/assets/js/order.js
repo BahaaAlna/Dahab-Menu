@@ -16,11 +16,16 @@ import { subscribeMenu } from "./menu-data.js";
 import { loadCart, saveCart } from "./cart-store.js";
 import { byOrder, groupBySection, escapeHtml } from "./utils.js";
 import {
-  onUser, signIn, signUp, logOut,
+  onUser, signIn, signUp,
   loadProfile, saveProfile,
-  prettyPhone, normalizePhone, authErrorMessage,
+  normalizePhone, authErrorMessage,
 } from "./auth.js";
 import { readFeatures } from "./features.js";
+import { mountAccountMenu } from "./account-menu.js";
+import { LINK_SUFFIX } from "./dev-mode.js";
+import {
+  addressList, defaultAddressText, freeSlot, addressTitle,
+} from "./profile-data.js";
 
 /* ---------- بوابة الميزة ----------
    إخفاء الخيار من صفحة الترحيب لا يكفي، لأن الرابط المباشر
@@ -37,7 +42,6 @@ const cartBar = $("cartBar");
 const gateErr = $("gateErr");
 const coErr = $("coErr");
 const authDialog = $("authDialog");
-const accountDialog = $("accountDialog");
 const checkoutDialog = $("checkoutDialog");
 const doneDialog = $("doneDialog");
 
@@ -85,49 +89,13 @@ function setBusy(btn, busy, labelWhenIdle) {
    أيقونة الحساب العائمة
    ============================================================ */
 
-const profileBtn = $("profileBtn");
-const profileInitial = $("profileInitial");
+/* القائمة المشتركة: «ملفي» و«طلباتي» وتسجيل الخروج. وكلتا
+   الوجهتين صفحة قائمة بذاتها، فيعمل زرّ الرجوع في الهاتف. */
+const menu = mountAccountMenu({ onSignIn: () => openAuth(false) });
 
 function drawProfileBtn() {
-  const name = (profile?.name || "").trim();
-  const inside = Boolean(currentUser);
-
-  profileBtn.classList.toggle("is-in", inside);
-  profileBtn.setAttribute("aria-label", inside ? "حسابك" : "تسجيل الدخول أو إنشاء حساب");
-
-  // أول حرف من الاسم بدل الأيقونة عند تسجيل الدخول
-  const showInitial = inside && Boolean(name);
-  if (showInitial) profileInitial.textContent = name[0];
-  profileInitial.hidden = !showInitial;
-  $("profileIcon").hidden = showInitial;
+  menu.update(currentUser, profile);
 }
-
-profileBtn.addEventListener("click", () => {
-  if (currentUser) {
-    $("accName").textContent = profile?.name || "زبون دهب";
-    $("accPhone").textContent = profile?.phone ? prettyPhone(profile.phone) : "";
-
-    const addr = profile?.address;
-    $("accAddr").textContent = addr ? "العنوان المحفوظ: " + addr : "";
-    $("accAddr").hidden = !addr;
-
-    accountDialog.showModal();
-  } else {
-    openAuth(false);
-  }
-});
-
-$("accCloseBtn").addEventListener("click", () => accountDialog.close());
-
-accountDialog.addEventListener("click", (e) => {
-  if (e.target === accountDialog) accountDialog.close();
-});
-
-$("logoutBtn").addEventListener("click", async () => {
-  accountDialog.close();
-  // تبقى السلة كما هي، فهي سلة المتصفح لا سلة الحساب
-  await logOut();
-});
 
 /* ============================================================
    نافذة التسجيل
@@ -168,6 +136,13 @@ $("authCloseBtn").addEventListener("click", () => {
   authDialog.close();
 });
 
+// لا تبقى كلمة المرور مكتوبة في الصفحة بعد إغلاق النافذة
+authDialog.addEventListener("close", () => {
+  loginForm.reset();
+  signupForm.reset();
+  gateErr.textContent = "";
+});
+
 authDialog.addEventListener("click", (e) => {
   if (e.target === authDialog) {
     checkoutAfterAuth = false;
@@ -175,7 +150,7 @@ authDialog.addEventListener("click", (e) => {
   }
 });
 
-const BAD_PHONE = "رقم الموبايل غير صحيح، والصيغة المطلوبة 09xxxxxxxx.";
+const BAD_PHONE = "رقم الهاتف غير صحيح، والصيغة المطلوبة 09xxxxxxxx.";
 
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -233,20 +208,14 @@ onUser(async (user) => {
 
   drawProfileBtn();
 
-  if (!user) {
-    // سجّل خروجه، فلم يعد له حق قراءة الطلبات، لذلك تتوقّف المراقبة
-    closeMyOrders();
-    return;
-  }
+  if (!user) return;
 
-  if (profile?.address && !$("coAddress").value) {
-    $("coAddress").value = profile.address;
-  }
+  // نجح دخوله، فلا معنى لبقاء نافذة التسجيل مفتوحة أمامه
+  if (authDialog.open) authDialog.close();
 
-  // سجّل دخوله وهو متوجّه للدفع، فنتابع معه دون ضغط جديد
+  // وإن كان متوجّهاً للدفع، يُتابع معه دون ضغط جديد
   if (checkoutAfterAuth) {
     checkoutAfterAuth = false;
-    authDialog.close();
     openCheckout();
   }
 });
@@ -442,11 +411,60 @@ function openCheckout() {
     .join("");
 
   $("coTotal").textContent = cartTotal();
-  if (profile?.address && !$("coAddress").value) {
-    $("coAddress").value = profile.address;
-  }
+  drawAddressChoices();
   checkoutDialog.showModal();
 }
+
+/* ============================================================
+   اختيار العنوان عند الدفع
+
+   العناوين المحفوظة تُعرَض خيارات جاهزة، والافتراضي مُحدَّد سلفاً،
+   ويبقى «عنوان آخر» لطلب يُرسَل إلى مكان غير معتاد دون أن يُحشَر
+   في الملف المحفوظ.
+   ============================================================ */
+
+const coAddrChoices = $("coAddrChoices");
+const coAddress = $("coAddress");
+
+function drawAddressChoices() {
+  const list = addressList(profile);
+
+  if (list.length === 0) {
+    coAddrChoices.hidden = true;
+    coAddrChoices.innerHTML = "";
+    coAddress.hidden = false;
+    return;
+  }
+
+  coAddrChoices.hidden = false;
+  coAddrChoices.innerHTML = list.map((entry, i) =>
+    '<label class="co-addr">' +
+      '<input type="radio" name="coAddr" value="' + escapeHtml(entry.text) + '"' +
+        (entry.isDefault ? " checked" : "") + '>' +
+      '<span class="co-addr-body">' +
+        '<b>' + escapeHtml(addressTitle(entry, i)) + '</b>' +
+        '<small>' + escapeHtml(entry.text) + '</small>' +
+      '</span>' +
+    '</label>'
+  ).join("") +
+    '<label class="co-addr">' +
+      '<input type="radio" name="coAddr" value="">' +
+      '<span class="co-addr-body"><b>عنوان آخر</b></span>' +
+    '</label>';
+
+  // الحقل لا يظهر إلا مع خيار «عنوان آخر»
+  coAddress.hidden = true;
+  coAddress.value = defaultAddressText(profile);
+}
+
+coAddrChoices?.addEventListener("change", (e) => {
+  const picked = e.target.value;
+  const other = picked === "";
+
+  coAddress.hidden = !other;
+  coAddress.value = other ? "" : picked;
+  if (other) coAddress.focus();
+});
 
 /* هنا وحدها يُطلَب تسجيل الدخول، لا قبل ذلك. */
 $("checkoutBtn").addEventListener("click", () => {
@@ -506,9 +524,10 @@ $("confirmBtn").addEventListener("click", async () => {
   try {
     await addDoc(collection(db, "orders"), order);
 
-    // يُحفَظ العنوان للطلب التالي
-    saveProfile(currentUser.uid, { address }).catch(() => {});
-    if (profile) profile.address = address;
+    // عنوان جديد يُحفَظ في أول خانة فارغة، فيجد الزبون عناوينه
+    // جاهزة في الطلب التالي. أما إن امتلأت الخانات الثلاث فلا
+    // يُلمَس شيء: إدارتها من صفحة «ملفي» وحدها.
+    rememberAddress(address);
 
     // أُفرغت السلة بالكامل، فالرسم الكامل هنا في محلّه
     cart.clear();
@@ -530,170 +549,30 @@ $("confirmBtn").addEventListener("click", async () => {
   }
 });
 
-/* ============================================================
-   📜  طلباتي — متابعة حالة الطلب
-
-   أول سؤال يطرحه الزبون بعد الإرسال: «أين وصل طلبي؟». ودون هذه
-   النافذة يبقى يتصل بالمطعم. تتغيّر الحالة من لوحة الإدارة،
-   وتُراقَب بـ onSnapshot فتصله من تلقاء نفسها.
-
-   تسمح القواعد في firestore.rules بقراءة طلباته هو وحده
-   (resource.data.uid == request.auth.uid)، فلا خطر من اطّلاعه
-   على طلبات غيره حتى لو عبث بالكود.
-   ============================================================ */
-
-const ordersDialog = $("ordersDialog");
-const ordList = $("ordList");
-
-/** تتوقّف المراقبة عند إغلاق النافذة، فلا يُترك مستمع عاملاً بلا
- *  فائدة، إذ يُحتسَب كل تحديث قراءة. */
-let stopOrders = null;
-
-/** آخر عشرين طلباً تكفي وتزيد، فالزبون لا يعود إلى أبعد من ذلك */
-const ORDERS_SHOWN = 20;
-
-function orderTimeMs(o) {
-  // تأتي createdAt فارغة للحظة قبل أن يختم الخادم الوقت
-  return o.createdAt?.toMillis ? o.createdAt.toMillis() : Date.now();
-}
-
-const AR_DAY = new Intl.DateTimeFormat("ar-SY", { day: "numeric", month: "long" });
-const AR_TIME = new Intl.DateTimeFormat("ar-SY", { hour: "numeric", minute: "2-digit" });
-
-/** «اليوم ٨:٣٠ م» أو «أمس ...» أو «١٨ تشرين الأول ...» */
-function whenLabel(ms) {
-  const midnight = (d) => new Date(d).setHours(0, 0, 0, 0);
-  const days = Math.round((midnight(Date.now()) - midnight(ms)) / 86400000);
-  const time = AR_TIME.format(new Date(ms));
-
-  if (days === 0) return "اليوم " + time;
-  if (days === 1) return "أمس " + time;
-  return AR_DAY.format(new Date(ms)) + " — " + time;
-}
-
-/** الحالة غير المعروفة تُعرض كما هي بدل إخفاء الطلب */
-function statusOf(raw) {
-  return ORDER_STATUS[raw] || { label: String(raw || "—"), tone: "wait" };
-}
-
-function orderCardHtml(o) {
-  const state = statusOf(o.status);
-  const lines = Array.isArray(o.items) ? o.items : [];
-
-  const linesHtml = lines.map((l) => {
-    const qty = Number(l.qty) || 1;
-    const price = Number(l.price) || 0;
-    return '<div class="ord-line">' +
-      '<span>' + escapeHtml(l.name) + ' <b>×' + qty + '</b></span>' +
-      '<span>' + (price * qty) + ' ' + CURRENCY + '</span>' +
-      '</div>';
-  }).join("");
-
-  return '<article class="ord">' +
-    '<div class="ord-head">' +
-      '<span class="ord-when">' + escapeHtml(whenLabel(orderTimeMs(o))) + '</span>' +
-      '<span class="ord-state is-' + state.tone + '">' + escapeHtml(state.label) + '</span>' +
-    '</div>' +
-    '<div class="ord-lines">' + linesHtml + '</div>' +
-    (o.note ? '<p class="ord-note">ملاحظتك: ' + escapeHtml(o.note) + '</p>' : '') +
-    '<div class="ord-foot">المجموع: <strong>' +
-      (Number(o.total) || 0) + '</strong> ' + CURRENCY +
-    '</div>' +
-    '</article>';
-}
-
-function drawOrders(list) {
-  if (list.length === 0) {
-    ordList.innerHTML =
-      '<p class="ord-empty">لم تقم بأي طلب بعد.<br>' +
-      'اختر ما تريده من القائمة وأرسله إلينا.</p>';
-    return;
-  }
-  ordList.innerHTML = list.map(orderCardHtml).join("");
-}
-
-function ordersError(err) {
-  console.error("my orders error:", err);
-  ordList.innerHTML =
-    '<p class="ord-err">تعذّر جلب طلباتك حالياً.<br>' +
-    'يُرجى التحقق من الإنترنت وإعادة المحاولة.</p>';
-}
-
-function snapToList(snap) {
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-
-/* يتطلّب المسار الأساسي فهرساً مركّباً (uid + createdAt) وهو موجود
-   في firestore.indexes.json. وإذا لم يُرفَع الفهرس بعد، يُرجع
-   Firestore الخطأ failed-precondition؛ فتُجلَب حينها طلباته دون
-   ترتيب وتُرتَّب هنا. والنتيجة ذاتها تماماً لكن دون فهرس.
-   (الفكرة ذاتها المتّبعة في menu-data.js) */
-function watchMyOrders() {
-  if (!currentUser) return;
-  stopMyOrders();
-
-  const mine = where("uid", "==", currentUser.uid);
-  const ref = collection(db, "orders");
-
-  stopOrders = onSnapshot(
-    query(ref, mine, orderBy("createdAt", "desc"), limit(ORDERS_SHOWN)),
-    (snap) => drawOrders(snapToList(snap)),
-    (err) => {
-      if (err?.code !== "failed-precondition") return ordersError(err);
-
-      console.warn("فهرس الطلبات لم يُرفَع بعد — جرى الترتيب محلياً.");
-      stopOrders = onSnapshot(
-        query(ref, mine),
-        (snap) => drawOrders(
-          snapToList(snap)
-            .sort((a, b) => orderTimeMs(b) - orderTimeMs(a))
-            .slice(0, ORDERS_SHOWN)
-        ),
-        ordersError
-      );
-    }
-  );
-}
-
-function stopMyOrders() {
-  if (stopOrders) stopOrders();
-  stopOrders = null;
-}
-
-/** يُنادى من onUser عند تسجيل الخروج، ولذلك هو declaration لا const */
-function closeMyOrders() {
-  stopMyOrders();
-  if (ordersDialog.open) ordersDialog.close();
-}
-
-function openMyOrders() {
-  if (!currentUser) {
-    openAuth(false);
-    return;
-  }
-  ordList.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  ordersDialog.showModal();
-  watchMyOrders();
-}
-
-$("myOrdersBtn").addEventListener("click", () => {
-  accountDialog.close();
-  openMyOrders();
-});
-
+/* متابعة الطلب تفتح صفحة الطلبات */
 $("doneTrackBtn").addEventListener("click", () => {
-  doneDialog.close();
-  openMyOrders();
+  location.assign("orders.html" + LINK_SUFFIX);
 });
 
-$("ordCloseBtn").addEventListener("click", () => ordersDialog.close());
+/** يحفظ عنواناً لم يكن محفوظاً، إن بقيت خانة فارغة */
+function rememberAddress(address) {
+  if (!profile) return;
 
-ordersDialog.addEventListener("click", (e) => {
-  if (e.target === ordersDialog) ordersDialog.close();
-});
+  const known = addressList(profile).some((e) => e.text === address);
+  if (known) return;
 
-// يشمل ذلك زر «رجوع» في الموبايل ومفتاح Esc، لا زر «تمام» وحده
-ordersDialog.addEventListener("close", stopMyOrders);
+  const slot = freeSlot(profile);
+  if (!slot) return;
+
+  const addresses = { ...(profile.addresses || {}), [slot]: { label: "", text: address } };
+  const patch = { addresses };
+  if (!profile.defaultAddress) patch.defaultAddress = slot;
+
+  Object.assign(profile, patch);
+  saveProfile(currentUser.uid, patch).catch((err) => {
+    console.error("address save error:", err);
+  });
+}
 
 $("doneBtn").addEventListener("click", () => doneDialog.close());
 

@@ -1,0 +1,330 @@
+/* ============================================================
+   👤  صفحتا الحساب: «ملفي» و«طلباتي»
+
+   تبني على base.css و order.css — فمنهما يأتي زرّ الحساب العائم
+   وأنماط النوافذ وبطاقات الطلبات، ولا تُكرَّر هنا. وما في هذا
+   الملف هو ما تنفرد به الصفحتان: القائمة المنسدلة، تخطيط الصفحة،
+   وبطاقات العناوين.
+   ============================================================ */
+
+[hidden] {
+  display: none !important;
+}
+
+/* ============================================================
+   القائمة المنسدلة من زرّ الحساب
+   ============================================================ */
+
+.acct-menu {
+  /* تحت زرّ الحساب مباشرة: ١٢ (بُعد الزرّ) + ٤٢ (ارتفاعه) + ٨ */
+  position: fixed;
+  top: 62px;
+  left: 12px;
+  z-index: 120;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(26, 26, 26, 0.97);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--glow-soft), 0 12px 30px rgba(0, 0, 0, 0.55);
+  animation: menuIn 0.14s ease both;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* اسم صاحب الحساب فوق عناصر القائمة */
+.acct-who {
+  padding: 8px 12px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line-faint);
+  font-size: 0.82rem;
+  color: rgba(245, 240, 230, 0.55);
+}
+
+.acct-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.acct-item .ic {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.acct-item.is-out {
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.acct-item:active {
+  transform: scale(0.98);
+}
+
+.acct-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .acct-item:hover {
+    background: var(--wash-gold);
+    color: var(--gold-light);
+  }
+
+  .acct-item.is-out:hover {
+    color: var(--red);
+    background: rgba(239, 68, 68, 0.10);
+  }
+}
+
+/* ============================================================
+   تخطيط الصفحة
+   ============================================================ */
+
+.acct-page {
+  padding: 70px 16px 60px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.acct-head {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.acct-title {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--gold);
+  text-shadow: var(--text-glow);
+}
+
+.acct-sub {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.acct-card {
+  margin-bottom: 18px;
+  padding: 20px 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.acct-card-title {
+  margin-bottom: 14px;
+  font-size: 1.05rem;
+  color: var(--gold-light);
+}
+
+.acct-card-title small {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: rgba(245, 240, 230, 0.45);
+}
+
+.acct-card .lbl {
+  display: block;
+  margin-top: 14px;
+}
+
+.acct-card .field-input {
+  width: 100%;
+}
+
+/* رقم الهاتف: معروض للقراءة فقط، ويبدو كذلك */
+.acct-card .field-input[readonly] {
+  direction: ltr;
+  text-align: right;
+  color: rgba(245, 240, 230, 0.55);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+.acct-hint {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: rgba(245, 240, 230, 0.50);
+}
+
+.acct-card .btn {
+  margin-top: 18px;
+}
+
+/* بطاقة «يلزم تسجيل الدخول» */
+.acct-gate {
+  text-align: center;
+}
+
+.acct-gate p {
+  margin-bottom: 18px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgba(245, 240, 230, 0.70);
+}
+
+/* ============================================================
+   بطاقات العناوين
+   ============================================================ */
+
+.addr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addr {
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+/* الافتراضي يُميَّز بإطار ذهبي كامل لا بشارة وحدها */
+.addr.is-default {
+  border-color: var(--gold);
+  background: var(--wash-gold);
+}
+
+.addr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.addr-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+.addr-label .ic {
+  width: 16px;
+  height: 16px;
+  color: var(--gold);
+}
+
+.addr-tag {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--black);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.addr-text {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(245, 240, 230, 0.80);
+}
+
+.addr-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-faint);
+}
+
+.link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-btn.is-bad {
+  color: var(--red);
+}
+
+.link-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+  border-radius: var(--r-2xs);
+}
+
+.addr-empty {
+  padding: 22px 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: rgba(245, 240, 230, 0.55);
+}
+
+/* ============================================================
+   قائمة الطلبات داخل صفحة كاملة
+
+   في order.css كانت محصورة بارتفاع النافذة المنبثقة، وهنا
+   الصفحة كلها لها، فيُلغى الحدّ ويُلغى التمرير الداخلي.
+   ============================================================ */
+
+.acct-page .ord-list {
+  max-height: none;
+  overflow: visible;
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   رسالة الحفظ العابرة
+   ============================================================ */
+
+.save-toast {
+  position: fixed;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 130;
+  max-width: calc(100% - 32px);
+  padding: 11px 20px;
+  border: 1px solid var(--gold);
+  border-radius: var(--r-pill);
+  background: rgba(26, 26, 26, 0.97);
+  color: var(--gold-light);
+  font-size: 0.88rem;
+  box-shadow: var(--glow);
+  animation: toastIn 0.2s ease both;
+}
+
+.save-toast.is-bad {
+  border-color: var(--red);
+  color: #f87171;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}

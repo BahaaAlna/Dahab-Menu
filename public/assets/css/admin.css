@@ -559,3 +559,9 @@
   outline: 2px solid var(--gold-light);
   outline-offset: 3px;
 }
+
+/* حقلا الدخول متتاليان، والبريد يُكتب دائماً من اليسار */
+#emailInput {
+  margin-bottom: 10px;
+  text-align: left;
+}
