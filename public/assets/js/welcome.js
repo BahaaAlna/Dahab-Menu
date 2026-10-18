@@ -17,7 +17,6 @@ const dialog = document.getElementById("scanDialog");
 const openBtn = document.getElementById("tableBtn");
 const closeBtn = document.getElementById("scanCloseBtn");
 const deliveryChoice = document.getElementById("deliveryChoice");
-const soonNote = document.getElementById("choicesSoon");
 
 openBtn.addEventListener("click", () => dialog.showModal());
 closeBtn.addEventListener("click", () => dialog.close());
@@ -32,7 +31,6 @@ dialog.addEventListener("click", (e) => {
 subscribeFeatures((flags) => {
   deliveryChoice.hidden = !flags.delivery;
   openBtn.hidden = !flags.table;
-  soonNote.hidden = flags.delivery || flags.table;
 
   // إغلاق نافذة الطاولة إذا أُوقفت الميزة والنافذة مفتوحة
   if (!flags.table && dialog.open) dialog.close();
