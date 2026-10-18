@@ -1,5 +1,5 @@
 /* ============================================================
-   🌱  رفع بيانات المنيو الأولية إلى Firestore — يُستخدم مرة واحدة
+   🌱  رفع بيانات قائمة الطعام الأولية إلى Firestore — يُستخدم مرة واحدة
    ============================================================ */
 
 import {
@@ -67,7 +67,7 @@ uploadBtn.addEventListener("click", async () => {
 /* ---------- الحذف ---------- */
 
 clearBtn.addEventListener("click", async () => {
-  if (!confirm("هل أنت متأكد؟ سيتم حذف كل بيانات المنيو من Firebase!")) return;
+  if (!confirm("هل أنت متأكد؟ سيتم حذف جميع بيانات قائمة الطعام من Firebase.")) return;
 
   clearBtn.disabled = true;
   log("🗑️ Clearing all data...", "info");

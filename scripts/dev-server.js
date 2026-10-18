@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* ============================================================
-   🖥️  سيرفر التطوير المحلي — بدون أي مكتبات خارجية
-   يشغّل محتويات مجلد public/ ويطبع روابط المنيو ولوحة الإدارة.
+   🖥️  خادم التطوير المحلي — بدون أي مكتبات خارجية
+   يقدّم محتويات مجلد public/ ويطبع رابط قائمة الطعام ورابط لوحة الإدارة.
 
    التشغيل:   npm start
               npm start -- --port 5000
@@ -24,7 +24,7 @@ const START_PORT = Number(
 );
 const openArg = args.indexOf("--open");
 const SHOULD_OPEN = openArg !== -1;
-// --open بدون قيمة يفتح المنيو، ومعها يفتح الصفحة المطلوبة
+// --open بدون قيمة يفتح قائمة الطعام، ومع قيمة يفتح الصفحة المطلوبة
 const OPEN_PATH =
   SHOULD_OPEN && args[openArg + 1] && !args[openArg + 1].startsWith("--")
     ? args[openArg + 1].replace(/^\//, "")
@@ -80,12 +80,12 @@ const server = http.createServer((req, res) => {
   });
 });
 
-/** إذا كان المنفذ مشغولاً، جرّب الذي بعده */
+/** إذا كان المنفذ مشغولاً، تُجرَّب المنافذ التي تليه */
 let attempts = 0;
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE" && attempts < MAX_PORT_TRIES) {
     attempts++;
-    console.log(`  ⚠️  المنفذ ${START_PORT + attempts - 1} مشغول، بجرب ${START_PORT + attempts}...`);
+    console.log(`  ⚠️  المنفذ ${START_PORT + attempts - 1} مشغول، ستتم تجربة المنفذ ${START_PORT + attempts}...`);
     server.listen(START_PORT + attempts);
     return;
   }
@@ -102,7 +102,7 @@ server.listen(START_PORT, () => {
   ║            دهب — شاورما و جريل                ║
   ╚══════════════════════════════════════════════╝
 
-    🍽️  المنيو        ${base}/
+    🍽️  قائمة الطعام   ${base}/
     🛠️  لوحة الإدارة   ${base}/admin.html
     🌱  رفع البيانات   ${base}/tools/seed.html
 

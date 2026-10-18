@@ -1,6 +1,6 @@
 /* ============================================================
    🛠️  لوحة الإدارة — إضافة/تعديل/حذف الأقسام والأصناف
-   كل تعديل ينعكس فوراً على صفحة المنيو عند الزبائن.
+   ينعكس كل تعديل فوراً على صفحة قائمة الطعام لدى الزبائن.
    ============================================================ */
 
 import {
@@ -31,7 +31,7 @@ function openPanel() {
 
 function tryLogin() {
   if (pwInput.value !== ADMIN_PASSWORD) {
-    loginErr.textContent = "كلمة السر خاطئة";
+    loginErr.textContent = "كلمة المرور غير صحيحة";
     pwInput.value = "";
     setTimeout(() => (loginErr.textContent = ""), 2500);
     return;
@@ -41,7 +41,7 @@ function tryLogin() {
     .then(openPanel)
     .catch((e) => {
       loginErr.textContent =
-        "خطأ في الاتصال بـ Firebase. تأكد من تفعيل Anonymous Authentication.";
+        "تعذّر الاتصال بـ Firebase. يُرجى التأكد من تفعيل Anonymous Authentication.";
       console.error(e);
     });
 }
@@ -54,7 +54,7 @@ $("logoutBtn").addEventListener("click", () => {
   location.reload();
 });
 
-// دخول تلقائي إذا الجلسة ما زالت مفتوحة
+// دخول تلقائي في حال كانت الجلسة ما زالت مفتوحة
 if (sessionStorage.getItem(SESSION_KEY) === "1") {
   signInAnonymously(auth).then(openPanel);
 }
@@ -108,7 +108,7 @@ function itemRowHtml(item) {
           <span class="stepper-btns">
             <button type="button" class="stepper-btn" title="زيادة"
                     onclick="window.__stepPrice('${item.id}',1)">▲</button>
-            <button type="button" class="stepper-btn" title="نقصان"
+            <button type="button" class="stepper-btn" title="إنقاص"
                     onclick="window.__stepPrice('${item.id}',-1)">▼</button>
           </span>
         </div>
@@ -147,7 +147,7 @@ function sectionCardHtml(sec, secItems) {
             <span class="stepper-btns">
               <button type="button" class="stepper-btn" title="زيادة"
                       onclick="window.__stepInput('new-pr-${sec.id}',1)">▲</button>
-              <button type="button" class="stepper-btn" title="نقصان"
+              <button type="button" class="stepper-btn" title="إنقاص"
                       onclick="window.__stepInput('new-pr-${sec.id}',-1)">▼</button>
             </span>
           </div>
@@ -196,14 +196,14 @@ window.__updField = async (itemId, field, value) => {
     await updateDoc(doc(db, COLLECTIONS.items, itemId), { [field]: value });
     toast("تم الحفظ ✓");
   } catch (e) {
-    toast("فشل الحفظ", true);
+    toast("تعذّر الحفظ", true);
     console.error(e);
   }
 };
 
-/* حماية: في كروم، عجلة الفأرة بتغيّر قيمة حقل الرقم المركَّز — وبما إن
-   التغيير بينحفظ فوراً على Firestore، ممكن سعر ينتغيّر بالغلط.
-   منلغي التركيز عند أول سكرول. */
+/* حماية: في متصفح كروم تغيّر عجلة الفأرة قيمة حقل الرقم المركَّز، وبما أنّ
+   التغيير يُحفَظ فوراً في Firestore، فقد يتغيّر أحد الأسعار من دون قصد.
+   لذلك يُلغى التركيز عند أول تمرير. */
 document.addEventListener(
   "wheel",
   () => {
@@ -213,7 +213,7 @@ document.addEventListener(
   { passive: true }
 );
 
-/** زيادة/نقصان سعر صنف محفوظ — يحفظ مباشرة على Firestore */
+/** زيادة سعر صنف محفوظ أو إنقاصه — يُحفَظ مباشرة في Firestore */
 window.__stepPrice = (itemId, dir) => {
   const item = items.find((x) => x.id === itemId);
   if (!item) return;
@@ -224,7 +224,7 @@ window.__stepPrice = (itemId, dir) => {
   window.__updField(itemId, "price", next);
 };
 
-/** زيادة/نقصان قيمة حقل محلي (صف الإضافة) — بدون حفظ */
+/** زيادة قيمة حقل محلي أو إنقاصها (صف الإضافة) — من دون حفظ */
 window.__stepInput = (inputId, dir) => {
   const el = $(inputId);
   if (!el) return;
@@ -240,7 +240,7 @@ window.__toggleAvail = async (itemId) => {
     });
     toast(item.available === false ? "أصبح متوفراً" : "أصبح غير متوفر");
   } catch (e) {
-    toast("فشل", true);
+    toast("تعذّر التنفيذ", true);
   }
 };
 
@@ -250,7 +250,7 @@ window.__delItem = (itemId, name) => {
       await deleteDoc(doc(db, COLLECTIONS.items, itemId));
       toast("تم الحذف");
     } catch (e) {
-      toast("فشل الحذف", true);
+      toast("تعذّر الحذف", true);
     }
   });
 };
@@ -261,8 +261,8 @@ window.__addItem = async (sectionId) => {
   const name = nameEl.value.trim();
   const price = Number(priceEl.value);
 
-  if (!name) return toast("أدخل اسم الصنف", true);
-  if (!price || price < 0) return toast("أدخل سعر صحيح", true);
+  if (!name) return toast("يُرجى إدخال اسم الصنف", true);
+  if (!price || price < 0) return toast("يُرجى إدخال سعر صحيح", true);
 
   const sec = sections.find((s) => s.id === sectionId);
   const maxOrder = items
@@ -284,7 +284,7 @@ window.__addItem = async (sectionId) => {
     priceEl.value = "";
     toast("تمت الإضافة ✓");
   } catch (e) {
-    toast("فشل الإضافة", true);
+    toast("تعذّرت الإضافة", true);
     console.error(e);
   }
 };
@@ -316,12 +316,12 @@ window.__editSec = (sid) => {
 $("secSaveBtn").addEventListener("click", async () => {
   const name = $("secName").value.trim();
   const icon = $("secIcon").value.trim() || DEFAULT_ICON;
-  if (!name) return toast("أدخل اسم القسم", true);
+  if (!name) return toast("يُرجى إدخال اسم القسم", true);
 
   try {
     if (editingSecId) {
       await updateDoc(doc(db, COLLECTIONS.sections, editingSecId), { name, icon });
-      // تحديث اسم/رمز القسم داخل كل أصنافه
+      // تحديث اسم القسم ورمزه داخل جميع أصنافه
       const batch = writeBatch(db);
       items
         .filter((i) => i.sectionId === editingSecId)
@@ -344,7 +344,7 @@ $("secSaveBtn").addEventListener("click", async () => {
     }
     closeModal("sectionModal");
   } catch (e) {
-    toast("فشل الحفظ", true);
+    toast("تعذّر الحفظ", true);
     console.error(e);
   }
 });
@@ -354,7 +354,7 @@ window.__delSec = (sid) => {
   const secItems = items.filter((i) => i.sectionId === sid);
   showConfirm(
     `حذف قسم "${sec.name}"؟`,
-    `سيتم حذف القسم و${secItems.length} صنف معه.`,
+    `سيُحذف القسم ومعه ${secItems.length} صنف.`,
     async () => {
       try {
         const batch = writeBatch(db);
@@ -363,7 +363,7 @@ window.__delSec = (sid) => {
         await batch.commit();
         toast("تم حذف القسم");
       } catch (e) {
-        toast("فشل الحذف", true);
+        toast("تعذّر الحذف", true);
       }
     }
   );

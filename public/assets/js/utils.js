@@ -17,7 +17,7 @@ export function groupBySection(items) {
   return grouped;
 }
 
-/** تهريب النص قبل حقنه في HTML */
+/** تهريب النص قبل إدراجه في HTML */
 export function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
