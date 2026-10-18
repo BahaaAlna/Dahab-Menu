@@ -6,7 +6,7 @@
   <title>دهب | طلب دليفري</title>
 
   <link rel="icon" href="assets/img/logo.png">
-  <!-- أهم ملف خط: عربي 400 — ينزل مع أول طلب بدل ما ينتظر الـ CSS -->
+  <!-- أهم ملف خط: عربي 400 — يُنزَّل مع أول طلب بدل انتظار الـ CSS -->
   <link rel="preload" href="assets/fonts/ibm-plex-sans-arabic-arabic-400.woff2"
         as="font" type="font/woff2" crossorigin>
 
@@ -18,9 +18,9 @@
 
   <a class="back-link" href="./"><span aria-hidden="true">→</span> رجوع</a>
 
-  <!-- ===== أيقونة الحساب — عائمة فوق على الشمال =====
-       الزبون بيتصفّح ويعبّي سلته بدون حساب. هي الأيقونة
-       بتفتحله الحساب وقت يحب، والتسجيل بينطلب وقت الدفع بس. -->
+  <!-- ===== أيقونة الحساب — عائمة في الأعلى على اليسار =====
+       يتصفّح الزبون ويملأ سلته دون حساب. وتفتح هذه الأيقونة
+       الحساب متى شاء، ولا يُطلَب التسجيل إلا عند الدفع. -->
   <button class="profile-btn" type="button" id="profileBtn"
           aria-label="الحساب" aria-haspopup="dialog">
     <svg class="ic" id="profileIcon" aria-hidden="true"><use href="assets/img/icons.svg#user"></use></svg>
@@ -32,13 +32,13 @@
 
     <header class="order-intro">
       <h1 class="order-title">طلب دليفري</h1>
-      <p class="order-sub">اختار يلي بدك ياه ونحنا منوصّلو لعندك</p>
+      <p class="order-sub">اختر ما تريده ونحن نوصّله إليك</p>
     </header>
 
     <main class="order-menu" id="orderMenu">
       <div class="loading">
         <div class="spinner"></div>
-        <p style="margin-top:20px;">جاري تحميل القائمة...</p>
+        <p style="margin-top:20px;">جارٍ تحميل القائمة...</p>
       </div>
     </main>
 
@@ -47,8 +47,8 @@
   <!-- ===== الرصيف السفلي: تنبيه السلة فوق شريط السلة ===== -->
   <div class="bottom-dock">
 
-    <!-- بيبيّن لما ينشال صنف من السلة لأنه ما عاد متوفر —
-         أحسن من إنه المجموع يتغيّر لحاله بدون ما يعرف ليش -->
+    <!-- يظهر عند حذف صنف من السلة لأنه لم يعد متوفراً، وهذا أفضل
+         من أن يتغيّر المجموع تلقائياً دون أن يعرف الزبون السبب -->
     <p class="cart-note" id="cartNote" hidden>
       <span id="cartNoteText"></span>
       <button class="cart-note-x" type="button" id="cartNoteClose" aria-label="إغلاق التنبيه">×</button>
@@ -63,59 +63,59 @@
     </div>
   </div>
 
-  <!-- ===== نافذة الحساب: دخول / حساب جديد =====
-       بتنفتح من أيقونة الحساب، أو تلقائياً وقت يضغط «إتمام الطلب»
-       وهو مو مسجّل. السلة بتضل محفوظة وراها. -->
+  <!-- ===== نافذة الحساب: تسجيل الدخول أو إنشاء حساب =====
+       تُفتَح من أيقونة الحساب، أو تلقائياً عند الضغط على «إتمام الطلب»
+       دون تسجيل. وتبقى السلة محفوظة خلفها. -->
   <dialog class="co-dialog" id="authDialog" aria-labelledby="authTitle">
     <div class="co-box">
-      <h2 class="co-title" id="authTitle">حسابك بدهب</h2>
+      <h2 class="co-title" id="authTitle">حسابك في دهب</h2>
       <p class="auth-why" id="authWhy" hidden>
-        منحتاج نعرف مين أنت ووين نوصّل حتى يوصلك طلبك صح.
-        دقيقة وبتخلص، وسلتك بتضل متل ما هي.
+        نحتاج إلى معرفة هويتك وعنوان التوصيل ليصلك طلبك على الوجه الصحيح.
+        لن يستغرق الأمر أكثر من دقيقة، وتبقى سلتك كما هي.
       </p>
 
       <div class="tabs" role="tablist">
-        <button class="tab is-on" id="tabLogin" role="tab" type="button" aria-selected="true">دخول</button>
+        <button class="tab is-on" id="tabLogin" role="tab" type="button" aria-selected="true">تسجيل الدخول</button>
         <button class="tab" id="tabSignup" role="tab" type="button" aria-selected="false">حساب جديد</button>
       </div>
 
-      <!-- دخول -->
+      <!-- تسجيل الدخول -->
       <form class="gate-form" id="loginForm">
         <label class="lbl" for="loginPhone">رقم الموبايل</label>
         <input class="field-input" id="loginPhone" type="tel" inputmode="numeric"
                autocomplete="tel" placeholder="09xxxxxxxx" required>
 
-        <label class="lbl" for="loginPw">كلمة السر</label>
+        <label class="lbl" for="loginPw">كلمة المرور</label>
         <input class="field-input" id="loginPw" type="password"
                autocomplete="current-password" placeholder="••••••" required>
 
-        <button class="btn full" type="submit" id="loginBtn">دخول</button>
+        <button class="btn full" type="submit" id="loginBtn">تسجيل الدخول</button>
       </form>
 
       <!-- حساب جديد -->
       <form class="gate-form" id="signupForm" hidden>
         <label class="lbl" for="suName">الاسم</label>
         <input class="field-input" id="suName" type="text" autocomplete="name"
-               placeholder="اسمك الكامل" maxlength="60" required>
+               placeholder="الاسم الكامل" maxlength="60" required>
 
         <label class="lbl" for="suPhone">رقم الموبايل</label>
         <input class="field-input" id="suPhone" type="tel" inputmode="numeric"
                autocomplete="tel" placeholder="09xxxxxxxx" required>
 
-        <label class="lbl" for="suPw">كلمة السر</label>
+        <label class="lbl" for="suPw">كلمة المرور</label>
         <input class="field-input" id="suPw" type="password"
-               autocomplete="new-password" placeholder="٦ خانات على الأقل" required>
+               autocomplete="new-password" placeholder="ست خانات على الأقل" required>
 
         <button class="btn full" type="submit" id="signupBtn">إنشاء الحساب</button>
       </form>
 
       <p class="err-msg" id="gateErr" role="alert"></p>
 
-      <button class="btn ghost full" type="button" id="authCloseBtn">كمّل تصفّح</button>
+      <button class="btn ghost full" type="button" id="authCloseBtn">متابعة التصفّح</button>
     </div>
   </dialog>
 
-  <!-- ===== نافذة الحساب وهو مسجّل دخول ===== -->
+  <!-- ===== نافذة الحساب بعد تسجيل الدخول ===== -->
   <dialog class="co-dialog" id="accountDialog" aria-labelledby="accTitle">
     <div class="co-box">
       <h2 class="co-title" id="accTitle">حسابك</h2>
@@ -137,14 +137,14 @@
       <div class="co-actions">
         <button class="btn full" type="button" id="myOrdersBtn">طلباتي</button>
         <button class="btn ghost full" type="button" id="accCloseBtn">تمام</button>
-        <button class="btn ghost full" type="button" id="logoutBtn">تسجيل خروج</button>
+        <button class="btn ghost full" type="button" id="logoutBtn">تسجيل الخروج</button>
       </div>
     </div>
   </dialog>
 
-  <!-- ===== طلباتي — حالة كل طلب، بتتحدّث لحالها =====
-       الزبون بيسأل «وين صار طلبي؟» — هون بيشوف الجواب بدون
-       ما يتصل. الحالة بتتغيّر من الداشبورد وبتوصل لهون فوراً. -->
+  <!-- ===== طلباتي — حالة كل طلب، تتحدّث تلقائياً =====
+       يسأل الزبون «أين وصل طلبي؟»، وهنا يجد الجواب دون أن يتصل.
+       تتغيّر الحالة من لوحة الإدارة وتصل إلى هنا فوراً. -->
   <dialog class="co-dialog" id="ordersDialog" aria-labelledby="ordTitle">
     <div class="co-box">
       <h2 class="co-title" id="ordTitle">طلباتي</h2>
@@ -170,11 +170,11 @@
 
       <label class="lbl" for="coAddress">العنوان</label>
       <input class="field-input" id="coAddress" type="text" maxlength="200"
-             placeholder="الحي، الشارع، أقرب نقطة دالّة" required>
+             placeholder="الحي والشارع وأقرب نقطة دالّة" required>
 
       <label class="lbl" for="coNote">ملاحظات <small>(اختياري)</small></label>
       <input class="field-input" id="coNote" type="text" maxlength="300"
-             placeholder="بدون بصل، جرس خربان...">
+             placeholder="مثال: بدون بصل، الجرس معطّل">
 
       <p class="co-total">المجموع: <strong id="coTotal">٠</strong> ل.س</p>
       <p class="err-msg" id="coErr" role="alert"></p>
@@ -192,12 +192,12 @@
       <span class="done-mark" aria-hidden="true">✓</span>
       <h2 class="co-title" id="doneTitle">وصلنا طلبك</h2>
       <p class="done-sub">
-        رح نتصل فيك لتأكيد الطلب والوقت،
-        وبتقدر تتابع حالته من «طلباتي».
+        سنتصل بك لتأكيد الطلب وموعد التسليم،
+        ويمكنك متابعة حالته من «طلباتي».
       </p>
 
       <div class="co-actions">
-        <button class="btn full" type="button" id="doneTrackBtn">تابع طلبك</button>
+        <button class="btn full" type="button" id="doneTrackBtn">متابعة الطلب</button>
         <button class="btn ghost full" type="button" id="doneBtn">تمام</button>
       </div>
     </div>

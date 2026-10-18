@@ -33,16 +33,16 @@ export const PRICE_STEP = 50;
 /** الرمز الافتراضي للقسم في حال عدم اختيار رمز */
 export const DEFAULT_ICON = "🍽️";
 
-/** حالات الطلب — المفتاح هو يلي بينخزن بـ Firestore،
- *  والنص هو يلي بيشوفه الزبون بصفحة «طلباتي».
- *  أي حالة مو موجودة هون بتنعرض كما هي بدون لون خاص. */
+/** حالات الطلب — المفتاح هو ما يُخزَّن في Firestore،
+ *  والنص هو ما يراه الزبون في صفحة «طلباتي».
+ *  أي حالة غير مذكورة هنا تُعرض كما هي دون لون خاص. */
 export const ORDER_STATUS = {
-  new:       { label: "عم نراجع طلبك", tone: "wait" },
-  confirmed: { label: "تأكد الطلب",    tone: "ok" },
-  preparing: { label: "عم نجهّزه",      tone: "ok" },
-  on_way:    { label: "بالطريق إلك",   tone: "go" },
-  delivered: { label: "وصل",           tone: "done" },
-  cancelled: { label: "ملغي",          tone: "bad" },
+  new:       { label: "قيد المراجعة",   tone: "wait" },
+  confirmed: { label: "تم تأكيد الطلب", tone: "ok" },
+  preparing: { label: "قيد التحضير",    tone: "ok" },
+  on_way:    { label: "في الطريق إليك", tone: "go" },
+  delivered: { label: "تم التسليم",     tone: "done" },
+  cancelled: { label: "ملغى",           tone: "bad" },
 };
 
 /** وثيقة مفاتيح تشغيل الميزات.
@@ -50,7 +50,7 @@ export const ORDER_STATUS = {
  *  الميزة مطفأة ما لم تكن قيمتها true صراحةً. */
 export const FEATURE_FLAGS = { collection: "settings", doc: "features" };
 
-/** وثيقة المنيو المجمّعة يلي يقراها الزباين.
- *  قراءة واحدة بدل ٨٨ — هي يلي بتخلي المشروع بالخطة المجانية.
- *  الداشبورد يكتبها تلقائياً عند أي تعديل. */
+/** وثيقة قائمة الطعام المجمّعة التي يقرأها الزبائن.
+ *  قراءة واحدة بدل ثمانٍ وثمانين، وهي ما يُبقي المشروع ضمن
+ *  الخطة المجانية. تكتبها لوحة الإدارة تلقائياً عند أي تعديل. */
 export const PUBLIC_MENU = { collection: "menu_public", doc: "current" };

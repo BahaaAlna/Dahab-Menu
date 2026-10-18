@@ -1,10 +1,10 @@
 /* ============================================================
    🛵  صفحة طلب الدليفري
 
-   الزبون بيتصفّح ويعبّي سلته بدون ما يسجّل — ما منوقفه بحاجز
-   تسجيل وهو لسا ما قرر شو بدو. التسجيل بينطلب بلحظة وحدة بس:
-   وقت يضغط «إتمام الطلب»، لأن هونيك منحتاج نعرف مين هو ووين
-   نوصّل. السلة بتضل محفوظة وراء نافذة التسجيل، فما بيضيع شي.
+   يتصفّح الزبون ويملأ سلته دون تسجيل، فلا يُوقَف عند حاجز تسجيل
+   وهو لم يقرّر بعد ما يريد. ولا يُطلَب التسجيل إلا في لحظة واحدة:
+   عند الضغط على «إتمام الطلب»، إذ نحتاج عندها إلى معرفة هويته
+   وعنوان التوصيل. وتبقى السلة محفوظة خلف نافذة التسجيل فلا يضيع شيء.
    ============================================================ */
 
 import {
@@ -42,9 +42,9 @@ const checkoutDialog = $("checkoutDialog");
 const doneDialog = $("doneDialog");
 
 /** السلة: معرّف الصنف → الكمية.
- *  منرجّعها من تخزين المتصفح، فتحديث الصفحة ما بيفرّغها.
- *  يلي محفوظ هو معرّفات وكميات بس — الأسعار والأسماء بتجي
- *  من Firestore وقت يوصل المنيو، ومنطابقها بـ draw(). */
+ *  تُستعاد من تخزين المتصفح، فلا يُفرغها تحديث الصفحة.
+ *  والمحفوظ معرّفات وكميات فقط، أما الأسعار والأسماء فتأتي من
+ *  Firestore عند وصول القائمة، وتُطابَق في draw(). */
 const cart = loadCart();
 /** كل الأصناف المعروضة: معرّف → بيانات الصنف */
 const itemsById = new Map();
@@ -52,20 +52,20 @@ const itemsById = new Map();
 let currentUser = null;
 let profile = null;
 
-/** صار true لما يضغط «إتمام الطلب» وهو مو مسجّل — حتى لما
- *  يخلّص تسجيل منكمّل معه للدفع بدل ما نرجّعه يضغط من جديد. */
+/** تصير true عند الضغط على «إتمام الطلب» دون تسجيل، حتى إذا
+ *  أتمّ التسجيل نتابع معه إلى الدفع بدل مطالبته بالضغط من جديد. */
 let checkoutAfterAuth = false;
 
 /* ============================================================
    أدوات صغيرة
    ============================================================ */
 
-/** جمع عربي صحيح — «صنف واحد / صنفين / ٣ أصناف / ١٥ صنف» */
+/** صيغة جمع عربية صحيحة: «صنف واحد / صنفان / ٣ أصناف / ١٥ صنفاً» */
 function countLabel(n) {
   if (n === 1) return "صنف واحد";
-  if (n === 2) return "صنفين";
+  if (n === 2) return "صنفان";
   if (n <= 10) return n + " أصناف";
-  return n + " صنف";
+  return n + " صنفاً";
 }
 
 function cartTotal() {
@@ -78,7 +78,7 @@ function cartTotal() {
 
 function setBusy(btn, busy, labelWhenIdle) {
   btn.disabled = busy;
-  btn.textContent = busy ? "لحظة..." : labelWhenIdle;
+  btn.textContent = busy ? "يُرجى الانتظار..." : labelWhenIdle;
 }
 
 /* ============================================================
@@ -93,9 +93,9 @@ function drawProfileBtn() {
   const inside = Boolean(currentUser);
 
   profileBtn.classList.toggle("is-in", inside);
-  profileBtn.setAttribute("aria-label", inside ? "حسابك" : "دخول أو حساب جديد");
+  profileBtn.setAttribute("aria-label", inside ? "حسابك" : "تسجيل الدخول أو إنشاء حساب");
 
-  // أول حرف من الاسم بدل الأيقونة لما يكون مسجّل
+  // أول حرف من الاسم بدل الأيقونة عند تسجيل الدخول
   const showInitial = inside && Boolean(name);
   if (showInitial) profileInitial.textContent = name[0];
   profileInitial.hidden = !showInitial;
@@ -125,7 +125,7 @@ accountDialog.addEventListener("click", (e) => {
 
 $("logoutBtn").addEventListener("click", async () => {
   accountDialog.close();
-  // السلة بتضل متل ما هي — هي سلة المتصفح مو سلة الحساب
+  // تبقى السلة كما هي، فهي سلة المتصفح لا سلة الحساب
   await logOut();
 });
 
@@ -138,12 +138,13 @@ const tabSignup = $("tabSignup");
 const loginForm = $("loginForm");
 const signupForm = $("signupForm");
 
-/** forCheckout: عم نفتحها لأنه ضغط «إتمام الطلب» */
+/** forCheckout: تُفتَح النافذة لأنه ضغط «إتمام الطلب» */
 function openAuth(forCheckout) {
   checkoutAfterAuth = forCheckout;
   $("authWhy").hidden = !forCheckout;
-  // الزر بيرجّعه لوين كان: للسلة إذا جاي يدفع، وللمنيو إذا بس عم يتفرّج
-  $("authCloseBtn").textContent = forCheckout ? "رجوع للسلة" : "كمّل تصفّح";
+  // يعيده الزر إلى حيث كان: إلى السلة إن كان متوجّهاً للدفع،
+  // وإلى القائمة إن كان يتصفّح فقط
+  $("authCloseBtn").textContent = forCheckout ? "العودة إلى السلة" : "متابعة التصفّح";
   gateErr.textContent = "";
   authDialog.showModal();
 }
@@ -174,7 +175,7 @@ authDialog.addEventListener("click", (e) => {
   }
 });
 
-const BAD_PHONE = "رقم الموبايل مو صحيح — لازم يكون مثل 09xxxxxxxx.";
+const BAD_PHONE = "رقم الموبايل غير صحيح، والصيغة المطلوبة 09xxxxxxxx.";
 
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -193,7 +194,7 @@ loginForm.addEventListener("submit", async (e) => {
   } catch (err) {
     gateErr.textContent = authErrorMessage(err);
   } finally {
-    setBusy(btn, false, "دخول");
+    setBusy(btn, false, "تسجيل الدخول");
   }
 });
 
@@ -233,7 +234,7 @@ onUser(async (user) => {
   drawProfileBtn();
 
   if (!user) {
-    // طلع من حسابه — ما عاد إله حق يقرا الطلبات، فمنوقف المراقبة
+    // سجّل خروجه، فلم يعد له حق قراءة الطلبات، لذلك تتوقّف المراقبة
     closeMyOrders();
     return;
   }
@@ -242,7 +243,7 @@ onUser(async (user) => {
     $("coAddress").value = profile.address;
   }
 
-  // سجّل دخوله وهو رايح يدفع — منكمّل معه بدون ما يضغط من جديد
+  // سجّل دخوله وهو متوجّه للدفع، فنتابع معه دون ضغط جديد
   if (checkoutAfterAuth) {
     checkoutAfterAuth = false;
     authDialog.close();
@@ -251,7 +252,7 @@ onUser(async (user) => {
 });
 
 /* ============================================================
-   رسم المنيو مع أزرار الكمية
+   رسم قائمة الطعام مع أزرار الكمية
    ============================================================ */
 
 function controlsHtml(item, qty) {
@@ -263,9 +264,9 @@ function controlsHtml(item, qty) {
   }
 
   return '<span class="qty">' +
-    '<button class="qty-btn" type="button" data-dec="' + item.id + '" aria-label="أنقص">−</button>' +
+    '<button class="qty-btn" type="button" data-dec="' + item.id + '" aria-label="إنقاص الكمية">−</button>' +
     '<b class="qty-num">' + qty + '</b>' +
-    '<button class="qty-btn" type="button" data-add="' + item.id + '" aria-label="زد">+</button>' +
+    '<button class="qty-btn" type="button" data-add="' + item.id + '" aria-label="زيادة الكمية">+</button>' +
     '</span>';
 }
 
@@ -305,11 +306,11 @@ function draw(sections, items) {
   itemsById.clear();
   for (const it of items) itemsById.set(it.id, it);
 
-  /* مطابقة السلة مع المنيو الحالي.
-     السلة ممكن تكون راجعة من تخزين المتصفح من قبل شوي أو من
-     مبارح، وممكن المنيو تغيّر: صنف انشال، أو صار مو متوفر.
-     منشيل هالأصناف ومنخبّر الزبون — أحسن من إن المجموع
-     ينقص لحاله وهو ما بيعرف شو صار. */
+  /* مطابقة السلة مع القائمة الحالية.
+     قد تكون السلة مستعادة من تخزين المتصفح منذ قليل أو منذ يوم،
+     وقد تكون القائمة تغيّرت: صنف حُذف، أو لم يعد متوفراً. تُحذف
+     هذه الأصناف ويُخبَر الزبون، فذلك أفضل من أن ينقص المجموع
+     من تلقاء نفسه دون أن يعرف السبب. */
   const goneNames = [];
   let goneUnknown = 0;
 
@@ -343,10 +344,10 @@ function draw(sections, items) {
   drawCart();
 }
 
-/* تحديث صف واحد بس.
-   لو أعدنا رسم المنيو كله مع كل ضغطة على + أو −، رح تعيد
-   كل الأقسام حركة الظهور (fadeUp) فيصير «رفّة» بكل ضغطة،
-   وبتضيع مكان التمرير. فمنبدّل الصف المعني لحاله. */
+/* تحديث صف واحد فقط.
+   لو أُعيد رسم القائمة كاملة مع كل ضغطة على + أو −، لأعادت جميع
+   الأقسام حركة الظهور (fadeUp) فيحدث ارتجاف مع كل ضغطة، ويضيع
+   موضع التمرير. لذلك يُستبدَل الصف المعني وحده. */
 function updateRow(id) {
   const row = orderMenu.querySelector('[data-row="' + id + '"]');
   const item = itemsById.get(id);
@@ -355,7 +356,7 @@ function updateRow(id) {
 }
 
 /* ============================================================
-   تنبيه «انشال صنف من سلتك»
+   تنبيه حذف صنف من السلة
    ============================================================ */
 
 const cartNote = $("cartNote");
@@ -371,14 +372,14 @@ function showCartNote(names, unknownCount) {
   let text;
 
   if (total === 1 && names.length === 1) {
-    text = "«" + names[0] + "» ما عاد متوفر — شلناه من سلتك.";
+    text = "«" + names[0] + "» لم يعد متوفراً، وقد حُذف من سلتك.";
   } else if (total === 1) {
-    text = "في صنف ما عاد متوفر — شلناه من سلتك.";
+    text = "أحد الأصناف لم يعد متوفراً، وقد حُذف من سلتك.";
   } else {
-    text = "شلنا " + total + " أصناف من سلتك لأنها ما عادت متوفرة.";
+    text = "حُذفت " + total + " أصناف من سلتك لأنها لم تعد متوفرة.";
   }
 
-  // textContent مو innerHTML — الأسماء جاية من قاعدة البيانات
+  // تُستعمل textContent لا innerHTML، لأن الأسماء واردة من قاعدة البيانات
   $("cartNoteText").textContent = text;
   cartNote.hidden = false;
 
@@ -413,7 +414,7 @@ orderMenu.addEventListener("click", (e) => {
 
 subscribeMenu(draw, () => {
   orderMenu.innerHTML =
-    '<div class="loading" style="color:#f87171;">خطأ في تحميل القائمة. تأكد من الاتصال بالإنترنت.</div>';
+    '<div class="loading" style="color:#f87171;">تعذّر تحميل القائمة. يُرجى التحقق من الاتصال بالإنترنت.</div>';
 });
 
 /* ============================================================
@@ -447,7 +448,7 @@ function openCheckout() {
   checkoutDialog.showModal();
 }
 
-/* هون بس منطلب تسجيل الدخول — مو قبل. */
+/* هنا وحدها يُطلَب تسجيل الدخول، لا قبل ذلك. */
 $("checkoutBtn").addEventListener("click", () => {
   if (!currentUser) {
     openAuth(true);
@@ -465,21 +466,21 @@ checkoutDialog.addEventListener("click", (e) => {
 $("confirmBtn").addEventListener("click", async () => {
   coErr.textContent = "";
 
-  // النافذة ما بتنفتح إلا وهو مسجّل، بس ما منبني طلب على افتراض
+  // لا تُفتَح النافذة إلا بعد التسجيل، غير أن الطلب لا يُبنى على افتراض
   if (!currentUser) {
-    coErr.textContent = "انقطعت الجلسة — سجّل دخولك كمان مرة.";
+    coErr.textContent = "انقطعت الجلسة. يُرجى تسجيل الدخول من جديد.";
     return;
   }
 
   const address = $("coAddress").value.trim();
   if (address.length < 5) {
-    coErr.textContent = "اكتب عنوان واضح لنعرف وين نوصّل.";
+    coErr.textContent = "يُرجى كتابة عنوان واضح ليتسنّى لنا التوصيل.";
     return;
   }
 
   const lines = cartLines();
   if (lines.length === 0) {
-    coErr.textContent = "السلة فاضية.";
+    coErr.textContent = "السلة فارغة.";
     return;
   }
 
@@ -505,11 +506,11 @@ $("confirmBtn").addEventListener("click", async () => {
   try {
     await addDoc(collection(db, "orders"), order);
 
-    // منحفظ العنوان للطلب الجاي
+    // يُحفَظ العنوان للطلب التالي
     saveProfile(currentUser.uid, { address }).catch(() => {});
     if (profile) profile.address = address;
 
-    // السلة انفرغت كلها — هون الرسم الكامل بمحله
+    // أُفرغت السلة بالكامل، فالرسم الكامل هنا في محلّه
     cart.clear();
     saveCart(cart);
     hideCartNote();
@@ -517,12 +518,13 @@ $("confirmBtn").addEventListener("click", async () => {
     checkoutDialog.close();
     doneDialog.showModal();
   } catch (err) {
-    // السبب التقني بيضل بالكونسول — الزبون بدو يعرف شو يعمل، مو شو صار
+    // يبقى السبب التقني في الكونسول، فالزبون يحتاج أن يعرف ما يفعل
+    // لا ما حدث
     console.error("order error:", err);
     coErr.textContent =
       err?.code === "permission-denied"
-        ? "ما قدرنا نستقبل الطلب هلأ. اتصل فينا ونحنا منسجّله إلك."
-        : "ما وصل الطلب. تأكد من الإنترنت وجرّب كمان مرة.";
+        ? "تعذّر استقبال الطلب حالياً. يُرجى الاتصال بنا وسنسجّله لك."
+        : "لم يصل الطلب. يُرجى التحقق من الإنترنت وإعادة المحاولة.";
   } finally {
     setBusy(btn, false, "تأكيد وإرسال");
   }
@@ -531,45 +533,45 @@ $("confirmBtn").addEventListener("click", async () => {
 /* ============================================================
    📜  طلباتي — متابعة حالة الطلب
 
-   أول سؤال بيسأله الزبون بعد ما يبعت: «وين صار طلبي؟».
-   بدون هالنافذة بيضل يتصل بالمطعم. الحالة بتتغيّر من
-   الداشبورد، ومنراقبها بـ onSnapshot فبتوصله لحالها.
+   أول سؤال يطرحه الزبون بعد الإرسال: «أين وصل طلبي؟». ودون هذه
+   النافذة يبقى يتصل بالمطعم. تتغيّر الحالة من لوحة الإدارة،
+   وتُراقَب بـ onSnapshot فتصله من تلقاء نفسها.
 
-   القواعد بـ firestore.rules مسموح فيها يقرا طلباته هو بس
-   (resource.data.uid == request.auth.uid) — فما في خطر
-   إنه يشوف طلبات غيره حتى لو عبث بالكود.
+   تسمح القواعد في firestore.rules بقراءة طلباته هو وحده
+   (resource.data.uid == request.auth.uid)، فلا خطر من اطّلاعه
+   على طلبات غيره حتى لو عبث بالكود.
    ============================================================ */
 
 const ordersDialog = $("ordersDialog");
 const ordList = $("ordList");
 
-/** بنوقف المراقبة وقت تنسكّر النافذة — ما منخلي مستمع
- *  شغّال ع الفاضي، لأن كل تحديث بينحسب قراءة. */
+/** تتوقّف المراقبة عند إغلاق النافذة، فلا يُترك مستمع عاملاً بلا
+ *  فائدة، إذ يُحتسَب كل تحديث قراءة. */
 let stopOrders = null;
 
-/** آخر ٢٠ طلب بتكفي وزيادة — الزبون ما بيرجع أبعد من هيك */
+/** آخر عشرين طلباً تكفي وتزيد، فالزبون لا يعود إلى أبعد من ذلك */
 const ORDERS_SHOWN = 20;
 
 function orderTimeMs(o) {
-  // createdAt بيجي null للحظة قبل ما السيرفر يختم الوقت
+  // تأتي createdAt فارغة للحظة قبل أن يختم الخادم الوقت
   return o.createdAt?.toMillis ? o.createdAt.toMillis() : Date.now();
 }
 
 const AR_DAY = new Intl.DateTimeFormat("ar-SY", { day: "numeric", month: "long" });
 const AR_TIME = new Intl.DateTimeFormat("ar-SY", { hour: "numeric", minute: "2-digit" });
 
-/** «اليوم ٨:٣٠ م» / «مبارح ...» / «١٨ تشرين الأول ...» */
+/** «اليوم ٨:٣٠ م» أو «أمس ...» أو «١٨ تشرين الأول ...» */
 function whenLabel(ms) {
   const midnight = (d) => new Date(d).setHours(0, 0, 0, 0);
   const days = Math.round((midnight(Date.now()) - midnight(ms)) / 86400000);
   const time = AR_TIME.format(new Date(ms));
 
   if (days === 0) return "اليوم " + time;
-  if (days === 1) return "مبارح " + time;
+  if (days === 1) return "أمس " + time;
   return AR_DAY.format(new Date(ms)) + " — " + time;
 }
 
-/** حالة مو معروفة؟ منعرضها كما هي بدل ما نخبّي الطلب */
+/** الحالة غير المعروفة تُعرض كما هي بدل إخفاء الطلب */
 function statusOf(raw) {
   return ORDER_STATUS[raw] || { label: String(raw || "—"), tone: "wait" };
 }
@@ -603,8 +605,8 @@ function orderCardHtml(o) {
 function drawOrders(list) {
   if (list.length === 0) {
     ordList.innerHTML =
-      '<p class="ord-empty">لسا ما عملت ولا طلب.<br>' +
-      'اختار يلي بدك ياه من المنيو وابعتلنا.</p>';
+      '<p class="ord-empty">لم تقم بأي طلب بعد.<br>' +
+      'اختر ما تريده من القائمة وأرسله إلينا.</p>';
     return;
   }
   ordList.innerHTML = list.map(orderCardHtml).join("");
@@ -613,19 +615,19 @@ function drawOrders(list) {
 function ordersError(err) {
   console.error("my orders error:", err);
   ordList.innerHTML =
-    '<p class="ord-err">ما قدرنا نجيب طلباتك هلأ.<br>' +
-    'تأكد من الإنترنت وجرّب كمان مرة.</p>';
+    '<p class="ord-err">تعذّر جلب طلباتك حالياً.<br>' +
+    'يُرجى التحقق من الإنترنت وإعادة المحاولة.</p>';
 }
 
 function snapToList(snap) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-/* المسار الأساسي بدو فهرس مركّب (uid + createdAt) — موجود
-   بـ firestore.indexes.json. إذا الفهرس لسا ما انرفع، Firestore
-   بترجع failed-precondition؛ وقتها منجيب طلباته بدون ترتيب
-   ومنرتّبهن هون. نفس النتيجة بالضبط، بس بدون فهرس.
-   (نفس فكرة الاحتياط يلي بـ menu-data.js) */
+/* يتطلّب المسار الأساسي فهرساً مركّباً (uid + createdAt) وهو موجود
+   في firestore.indexes.json. وإذا لم يُرفَع الفهرس بعد، يُرجع
+   Firestore الخطأ failed-precondition؛ فتُجلَب حينها طلباته دون
+   ترتيب وتُرتَّب هنا. والنتيجة ذاتها تماماً لكن دون فهرس.
+   (الفكرة ذاتها المتّبعة في menu-data.js) */
 function watchMyOrders() {
   if (!currentUser) return;
   stopMyOrders();
@@ -639,7 +641,7 @@ function watchMyOrders() {
     (err) => {
       if (err?.code !== "failed-precondition") return ordersError(err);
 
-      console.warn("فهرس الطلبات لسا ما انرفع — رتّبناهن محلياً.");
+      console.warn("فهرس الطلبات لم يُرفَع بعد — جرى الترتيب محلياً.");
       stopOrders = onSnapshot(
         query(ref, mine),
         (snap) => drawOrders(
@@ -658,7 +660,7 @@ function stopMyOrders() {
   stopOrders = null;
 }
 
-/** منادى من onUser وقت يطلع من حسابه — ولهيك declaration مو const */
+/** يُنادى من onUser عند تسجيل الخروج، ولذلك هو declaration لا const */
 function closeMyOrders() {
   stopMyOrders();
   if (ordersDialog.open) ordersDialog.close();
@@ -690,7 +692,7 @@ ordersDialog.addEventListener("click", (e) => {
   if (e.target === ordersDialog) ordersDialog.close();
 });
 
-// بتشمل زر «رجوع» بالموبايل و Esc — مو بس زر «تمام»
+// يشمل ذلك زر «رجوع» في الموبايل ومفتاح Esc، لا زر «تمام» وحده
 ordersDialog.addEventListener("close", stopMyOrders);
 
 $("doneBtn").addEventListener("click", () => doneDialog.close());

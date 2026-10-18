@@ -125,12 +125,20 @@ git push
 
 وبذلك يكتمل الأمر. خلال دقيقة واحدة تقريباً يُحدَّث الموقع على العنوان الآتي:
 
-### 🌍 https://bahaaalna.github.io/Dahab-Menu/
+### 🌍 https://dahab-hama.shop
 
 | | |
 |---|---|
-| قائمة الطعام | https://bahaaalna.github.io/Dahab-Menu/ |
-| لوحة الإدارة | https://bahaaalna.github.io/Dahab-Menu/admin.html |
+| صفحة الترحيب | https://dahab-hama.shop/ |
+| قائمة الطعام | https://dahab-hama.shop/menu.html |
+| طلب دليفري | https://dahab-hama.shop/order.html |
+| لوحة الإدارة | https://dahab-hama.shop/admin.html |
+
+> **النطاق المخصّص:** ملف `public/CNAME` يحمل `dahab-hama.shop`، غير أن هذا
+> الملف وحده لا يكفي مع النشر عبر GitHub Actions. فالنطاق يُضبَط من
+> **Settings ← Pages ← Custom domain** في المستودع، ومن هناك تُفعَّل كذلك
+> خاصية Enforce HTTPS. والعنوان القديم
+> `https://bahaaalna.github.io/Dahab-Menu/` يبقى عاملاً.
 
 ويمكن متابعة عملية النشر من تبويب **Actions** في المستودع، أو عبر الأمر الآتي:
 
