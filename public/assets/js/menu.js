@@ -1,48 +1,42 @@
 /* ============================================================
    🍽️  صفحة قائمة الطعام — عرض مباشر للزبائن
-   تستمع إلى تغييرات Firestore وتعيد الرسم فوراً عند أي تعديل
-   يُجرى من لوحة الإدارة.
+
+   نُقل التحميل بالكامل إلى menu-data.js، وهذا الملف للرسم فقط.
    ============================================================ */
 
-import { db, collection, onSnapshot, query, orderBy } from "./firebase.js";
-import { COLLECTIONS, CURRENCY, DEFAULT_ICON } from "./config.js";
-import { byOrder, groupBySection } from "./utils.js";
+import { CURRENCY } from "./config.js";
+import { subscribeMenu } from "./menu-data.js";
+import { byOrder, groupBySection, escapeHtml } from "./utils.js";
 
 const menuWrap = document.getElementById("menuWrap");
 
-let sections = [];
-let items = [];
-let sectionsLoaded = false;
-let itemsLoaded = false;
-
-/* ---------- الرسم ---------- */
+/* ---------- الرسم ----------
+   يجب تمرير كل نص وارد من قاعدة البيانات على escapeHtml قبل
+   إدراجه في الصفحة، لأن الطلبات أصبحت متاحة للزبائن. */
 
 function itemHtml(item) {
   const cls = item.available === false ? "item unavailable" : "item";
   return `<div class="${cls}">
-        <span class="item-name">${item.name}</span>
+        <span class="item-name">${escapeHtml(item.name)}</span>
         <span class="item-dots"></span>
-        <span class="item-price">${item.price}<small>${CURRENCY}</small></span>
+        <span class="item-price">${escapeHtml(item.price)}<small>${CURRENCY}</small></span>
       </div>`;
 }
 
 function sectionHtml(section, sectionItems) {
-  const icon = section.icon || DEFAULT_ICON;
   return `<section class="section">
       <div class="section-head">
         <span class="line"></span>
-        <span class="section-icon">${icon}</span>
-        <span class="section-title">${section.name}</span>
-        <span class="section-icon">${icon}</span>
+        <span class="section-gem" aria-hidden="true"></span>
+        <span class="section-title">${escapeHtml(section.name)}</span>
+        <span class="section-gem" aria-hidden="true"></span>
         <span class="line"></span>
       </div>
       <div class="items">${sectionItems.map(itemHtml).join("")}</div>
     </section>`;
 }
 
-function render() {
-  if (!sectionsLoaded || !itemsLoaded) return;
-
+function draw(sections, items) {
   const bySection = groupBySection(items);
   const html = [...sections]
     .sort(byOrder)
@@ -55,28 +49,9 @@ function render() {
     html || '<div class="loading"><p>لا توجد أصناف حالياً</p></div>';
 }
 
-/* ---------- الاستماع المباشر ---------- */
+function showError() {
+  menuWrap.innerHTML =
+    '<div class="loading" style="color:#f87171;">تعذّر تحميل القائمة. يُرجى التحقق من الاتصال بالإنترنت.</div>';
+}
 
-onSnapshot(
-  query(collection(db, COLLECTIONS.sections), orderBy("order")),
-  (snap) => {
-    sections = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    sectionsLoaded = true;
-    render();
-  },
-  (err) => {
-    console.error("sections error:", err);
-    menuWrap.innerHTML =
-      '<div class="loading" style="color:#f87171;">تعذّر تحميل القائمة. يُرجى التحقق من الاتصال بالإنترنت.</div>';
-  }
-);
-
-onSnapshot(
-  collection(db, COLLECTIONS.items),
-  (snap) => {
-    items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    itemsLoaded = true;
-    render();
-  },
-  (err) => console.error("items error:", err)
-);
+subscribeMenu(draw, showError);

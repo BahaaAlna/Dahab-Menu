@@ -18,15 +18,27 @@ export const auth = getAuth(app);
 export {
   collection,
   doc,
+  getDoc,
   setDoc,
   addDoc,
   deleteDoc,
   updateDoc,
   onSnapshot,
   query,
+  where,
   orderBy,
+  limit,
   writeBatch,
   getDocs,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-export { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+export {
+  signInAnonymously,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";

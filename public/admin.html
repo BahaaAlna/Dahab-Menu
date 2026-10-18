@@ -6,9 +6,6 @@
   <title>دهب | لوحة الإدارة</title>
 
   <link rel="icon" href="assets/img/logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Aref+Ruqaa:wght@400;700&display=swap">
 
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/admin.css">
@@ -81,6 +78,35 @@
           <div class="divider"><span></span><i></i><span></span></div>
           <div class="stat-lbl">غير متوفر</div>
         </div>
+      </div>
+
+      <!-- مفاتيح الميزات -->
+      <div class="frame flags-card">
+        <span class="corner sm tl"></span><span class="corner sm tr"></span>
+        <span class="corner sm bl"></span><span class="corner sm br"></span>
+
+        <div class="flags-head">الميزات قيد التطوير</div>
+        <p class="flags-note">
+          عند الإيقاف تختفي الميزة عن الزبائن فوراً، دون الحاجة إلى نشر الموقع من جديد.
+        </p>
+
+        <label class="flag-row" for="flagDelivery">
+          <span class="flag-text">
+            <span class="flag-name">طلب دليفري</span>
+            <span class="flag-sub">صفحة الطلب وحساب الزبون</span>
+          </span>
+          <input type="checkbox" class="switch" id="flagDelivery">
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
+
+        <label class="flag-row" for="flagTable">
+          <span class="flag-text">
+            <span class="flag-name">طلب من الطاولة</span>
+            <span class="flag-sub">خيار مسح كود الطاولة</span>
+          </span>
+          <input type="checkbox" class="switch" id="flagTable">
+          <span class="switch-track" aria-hidden="true"></span>
+        </label>
       </div>
 
       <!-- شريط الأدوات -->

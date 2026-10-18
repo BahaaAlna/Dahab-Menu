@@ -8,7 +8,10 @@ import {
   collection, doc, setDoc, addDoc, deleteDoc, updateDoc,
   onSnapshot, query, orderBy, writeBatch,
 } from "./firebase.js";
-import { ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON, PRICE_STEP } from "./config.js";
+import {
+  ADMIN_PASSWORD, COLLECTIONS, DEFAULT_ICON, PRICE_STEP,
+  PUBLIC_MENU, FEATURE_FLAGS,
+} from "./config.js";
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
 
 const $ = (id) => document.getElementById(id);
@@ -68,18 +71,26 @@ let items = [];
 let searchTerm = "";
 const collapsedSections = new Set();
 
+let sectionsReady = false;
+let itemsReady = false;
+
 function startListening() {
   onSnapshot(
     query(collection(db, COLLECTIONS.sections), orderBy("order")),
     (snap) => {
       sections = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      sectionsReady = true;
       render();
+      scheduleAggregateWrite();
     }
   );
   onSnapshot(collection(db, COLLECTIONS.items), (snap) => {
     items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    itemsReady = true;
     render();
+    scheduleAggregateWrite();
   });
+  watchFeatureFlags();
 }
 
 /* ============================================================
@@ -425,3 +436,101 @@ function toast(msg, isErr = false) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toastEl.classList.remove("show"), 2200);
 }
+
+
+/* ============================================================
+   8. النسخة المجمّعة للزبائن
+
+   صفحة المنيو تقرأ وثيقة واحدة (menu_public/current) بدل ما
+   تقرأ ٨٨ وثيقة لكل زبون. منعيد كتابتها من هون بعد أي تعديل،
+   لأن الداشبورد هو المكان الوحيد يلي ينكتب منه المنيو.
+
+   التأجيل ١٢٠٠ مللي ثانية حتى تعديلات متتابعة (مثلاً حذف قسم
+   مع أصنافه) تطلع بكتبة واحدة بدل عشرات.
+   ============================================================ */
+
+let aggTimer = null;
+
+function scheduleAggregateWrite() {
+  if (!sectionsReady || !itemsReady) return;
+  clearTimeout(aggTimer);
+  aggTimer = setTimeout(writeAggregate, 1200);
+}
+
+async function writeAggregate() {
+  try {
+    await setDoc(doc(db, PUBLIC_MENU.collection, PUBLIC_MENU.doc), {
+      sections: [...sections].sort(byOrder).map((s) => ({
+        id: s.id,
+        name: s.name,
+        icon: s.icon || DEFAULT_ICON,
+        order: s.order || 0,
+      })),
+      items: [...items].sort(byOrder).map((i) => ({
+        sectionId: i.sectionId,
+        name: i.name,
+        price: i.price,
+        order: i.order || 0,
+        available: i.available !== false,
+      })),
+      updatedAt: Date.now(),
+    });
+  } catch (e) {
+    // ما منزعج الموظف — المنيو عنده صح، بس النسخة المجمّعة تأخرت
+    console.error("فشل تحديث النسخة المجمّعة:", e);
+  }
+}
+
+
+/* ============================================================
+   9. مفاتيح تشغيل الميزات
+
+   «طلب دليفري» و«طلب من الطاولة» ما زالتا قيد التطوير، لكنّ
+   الموقع منشور. فبدل سحب الكود عند كل تراجع، تُخزَّن حالة كل
+   ميزة في وثيقة واحدة بـ Firestore، ويقرؤها الزبائن مباشرة.
+   الإيقاف من هنا يخفي الميزة فوراً دون إعادة نشر.
+
+   الميزة مطفأة ما لم تُضبَط على true، فغياب الوثيقة يعني
+   أن الميزتين مخفيتان.
+   ============================================================ */
+
+const flagDelivery = $("flagDelivery");
+const flagTable = $("flagTable");
+
+function watchFeatureFlags() {
+  onSnapshot(
+    doc(db, FEATURE_FLAGS.collection, FEATURE_FLAGS.doc),
+    (snap) => {
+      const data = snap.exists() ? snap.data() : null;
+      flagDelivery.checked = data?.delivery === true;
+      flagTable.checked = data?.table === true;
+    },
+    (e) => {
+      console.error("features error:", e);
+      toast("تعذّرت قراءة حالة الميزات", true);
+    }
+  );
+}
+
+/** الكتابة بـ merge حتى لا يمحو مفتاحٌ المفتاحَ الآخر */
+async function writeFlag(key, value, el) {
+  try {
+    await setDoc(
+      doc(db, FEATURE_FLAGS.collection, FEATURE_FLAGS.doc),
+      { [key]: value, updatedAt: Date.now() },
+      { merge: true }
+    );
+    toast(value ? "تم تفعيل الميزة ✓" : "تم إيقاف الميزة");
+  } catch (e) {
+    el.checked = !value; // إرجاع المفتاح لحالته السابقة عند الفشل
+    toast("تعذّر حفظ الإعداد", true);
+    console.error(e);
+  }
+}
+
+flagDelivery.addEventListener("change", (e) =>
+  writeFlag("delivery", e.target.checked, e.target)
+);
+flagTable.addEventListener("change", (e) =>
+  writeFlag("table", e.target.checked, e.target)
+);

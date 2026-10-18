@@ -95,8 +95,13 @@
   text-shadow: var(--text-glow);
 }
 
-.section-icon {
-  font-size: 1.4rem;
+/* معيّن ذهبي صغير بدل الإيموجي — نفس معيّن الفاصل بالهوية */
+.section-gem {
+  width: 7px;
+  height: 7px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  flex-shrink: 0;
 }
 
 .items {

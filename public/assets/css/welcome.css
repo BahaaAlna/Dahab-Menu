@@ -1,0 +1,243 @@
+/* ============================================================
+   👋  صفحة الترحيب
+
+   مكتوبة للموبايل أول (mobile first): كل القواعد تحت هي
+   تنسيق الموبايل، و media queries بـ min-width بس لتحسين
+   الشاشات الأكبر — ما في ولا قاعدة max-width.
+
+   ما فيها ألوان ولا زوايا خاصة — كلها من base.css.
+   ============================================================ */
+
+/* ============================================================
+   التخطيط
+   ============================================================ */
+
+.welcome {
+  /* svh بتحسب شريط المتصفح بالموبايل، و vh احتياطي للمتصفحات القديمة */
+  min-height: 100vh;
+  min-height: 100svh;
+  max-width: 460px;
+  margin-inline: auto;
+  padding: 20px 16px;
+  /* احترام منطقة الأمان بموبايلات الشق (notch) */
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+}
+
+/* ============================================================
+   الهوية
+   ============================================================ */
+
+.welcome-frame {
+  padding: 24px 18px 18px;
+  text-align: center;
+}
+
+.welcome-logo {
+  display: block;
+  width: min(56vw, 180px);
+  height: auto;
+  margin-inline: auto;
+  filter: drop-shadow(var(--glow-soft));
+}
+
+.welcome-tag {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--gold-light);
+  text-shadow: var(--text-glow);
+}
+
+.welcome-divider {
+  margin-top: 14px;
+}
+
+/* ============================================================
+   السؤال
+   ============================================================ */
+
+.welcome-q {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+/* ============================================================
+   الخيارات الثلاثة
+   ============================================================ */
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  /* ٧٦ بكسل — هدف لمس مريح للإصبع، أكبر من الحد الأدنى الموصى به */
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-gold);
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+/* بالموبايل ما في hover — اللمس هو التفاعل الوحيد */
+.choice:active {
+  transform: scale(0.985);
+  background: var(--wash-gold);
+}
+
+.choice:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+.choice-ic {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line-soft);
+  background: var(--wash-gold);
+  /* الأيقونة ذهبية متل العناوين، مو بلون النص العادي */
+  color: var(--gold-light);
+  font-size: 1.35rem;
+}
+
+.choice-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.choice-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold-light);
+}
+
+.choice-sub {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: rgba(245, 240, 230, 0.55);
+}
+
+.choice-go {
+  flex-shrink: 0;
+  color: var(--gold);
+  font-size: 1.1rem;
+}
+
+/* ============================================================
+   التذييل
+   ============================================================ */
+
+.welcome-foot {
+  text-align: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.5px;
+  color: rgba(245, 240, 230, 0.4);
+}
+
+/* ============================================================
+   نافذة «امسح كود طاولتك»
+   ============================================================ */
+
+.scan-dialog {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  padding: 16px;
+  border: none;
+  background: transparent;
+}
+
+/* مهم: display يتحدد بـ [open] بس، وإلا بتظهر النافذة وهي مسكّرة */
+.scan-dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+.scan-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.scan-box {
+  width: 100%;
+  max-width: 340px;
+  padding: 28px 22px 22px;
+  text-align: center;
+}
+
+.scan-ic {
+  /* الأيقونة SVG فبتحتاج توسيط صريح، والحجم بالـ em من هون */
+  font-size: 2rem;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+}
+
+.scan-title {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--gold-light);
+  text-shadow: var(--text-glow);
+}
+
+.scan-text {
+  margin: 12px 0 22px;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: rgba(245, 240, 230, 0.75);
+}
+
+/* ============================================================
+   تحسينات الشاشات الأكبر — إضافة فوق تنسيق الموبايل
+   ============================================================ */
+
+@media (min-width: 540px) {
+  .welcome { gap: 26px; padding: 32px 20px; }
+  .welcome-frame { padding: 30px 24px 22px; }
+  .welcome-q { font-size: 1.25rem; }
+  .choice { min-height: 84px; padding: 16px 20px; }
+  .choice-title { font-size: 1.08rem; }
+  .choice-sub { font-size: 0.82rem; }
+}
+
+/* الأجهزة يلي فيها فأرة فعلاً */
+@media (hover: hover) {
+  .choice:hover {
+    border-color: var(--gold);
+    background: var(--wash-gold);
+  }
+}
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+  .choice { transition: none; }
+  .choice:active { transform: none; }
+}

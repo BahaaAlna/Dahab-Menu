@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دهب | شاورما و جريل</title>
+
+  <link rel="icon" href="assets/img/logo.png">
+  <!-- أهم ملف خط: عربي 400 — ينزل مع أول طلب بدل ما ينتظر الـ CSS -->
+  <link rel="preload" href="assets/fonts/ibm-plex-sans-arabic-arabic-400.woff2"
+        as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/menu.css">
+</head>
+<body>
+
+  <a class="back-link" href="./"><span aria-hidden="true">→</span> رجوع</a>
+  <div class="badge live-badge"><span class="dot"></span>مباشر</div>
+
+  <!-- ===== الواجهة ===== -->
+  <header class="hero">
+    <div class="frame hero-frame">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <img class="hero-logo" src="assets/img/logo.png" alt="دهب — شاورما و جريل">
+      <div class="hero-tag">طعم بيستاهل</div>
+      <div class="divider hero-divider"><span></span><i></i><span></span></div>
+    </div>
+    <div class="scroll-hint">القائمة ↓</div>
+  </header>
+
+  <!-- ===== القائمة (تُملأ من Firestore) ===== -->
+  <main class="menu-wrap" id="menuWrap">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top:20px;">جاري تحميل القائمة...</p>
+    </div>
+  </main>
+
+  <!-- ===== التواصل ===== -->
+  <section class="contact">
+    <div class="frame contact-frame">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="contact-title">تواصل معنا</div>
+      <div class="contact-row"><span class="ic-circle"><svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#pin"></use></svg></span><span class="contact-loc">حماة - شارع أبي الفداء</span></div>
+      <div class="contact-row"><span class="ic-circle"><svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#phone"></use></svg></span><a href="tel:013252542">013 25 25 042</a></div>
+      <div class="contact-row"><span class="ic-circle"><svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#chat"></use></svg></span><a href="https://wa.me/963985393900">0985 39 39 00</a></div>
+      <div class="contact-row"><span class="ic-circle"><svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#chat"></use></svg></span><a href="https://wa.me/963937282800">0937 28 28 00</a></div>
+    </div>
+  </section>
+
+  <footer>
+    دهب &mdash; شاورما و جريل &nbsp;•&nbsp; حماة <span class="heart">◆</span>
+  </footer>
+
+  <script type="module" src="assets/js/menu.js"></script>
+</body>
+</html>

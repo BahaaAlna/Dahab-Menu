@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دهب | طلب دليفري</title>
+
+  <link rel="icon" href="assets/img/logo.png">
+  <!-- أهم ملف خط: عربي 400 — ينزل مع أول طلب بدل ما ينتظر الـ CSS -->
+  <link rel="preload" href="assets/fonts/ibm-plex-sans-arabic-arabic-400.woff2"
+        as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/menu.css">
+  <link rel="stylesheet" href="assets/css/order.css">
+</head>
+<body>
+
+  <a class="back-link" href="./"><span aria-hidden="true">→</span> رجوع</a>
+
+  <!-- ===== أيقونة الحساب — عائمة فوق على الشمال =====
+       الزبون بيتصفّح ويعبّي سلته بدون حساب. هي الأيقونة
+       بتفتحله الحساب وقت يحب، والتسجيل بينطلب وقت الدفع بس. -->
+  <button class="profile-btn" type="button" id="profileBtn"
+          aria-label="الحساب" aria-haspopup="dialog">
+    <svg class="ic" id="profileIcon" aria-hidden="true"><use href="assets/img/icons.svg#user"></use></svg>
+    <span class="profile-initial" id="profileInitial" hidden></span>
+  </button>
+
+  <!-- ===== الطلب — مفتوح للكل من أول لحظة ===== -->
+  <section class="order" id="orderApp">
+
+    <header class="order-intro">
+      <h1 class="order-title">طلب دليفري</h1>
+      <p class="order-sub">اختار يلي بدك ياه ونحنا منوصّلو لعندك</p>
+    </header>
+
+    <main class="order-menu" id="orderMenu">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top:20px;">جاري تحميل القائمة...</p>
+      </div>
+    </main>
+
+  </section>
+
+  <!-- ===== الرصيف السفلي: تنبيه السلة فوق شريط السلة ===== -->
+  <div class="bottom-dock">
+
+    <!-- بيبيّن لما ينشال صنف من السلة لأنه ما عاد متوفر —
+         أحسن من إنه المجموع يتغيّر لحاله بدون ما يعرف ليش -->
+    <p class="cart-note" id="cartNote" hidden>
+      <span id="cartNoteText"></span>
+      <button class="cart-note-x" type="button" id="cartNoteClose" aria-label="إغلاق التنبيه">×</button>
+    </p>
+
+    <div class="cart-bar" id="cartBar" hidden>
+      <div class="cart-sum">
+        <span class="cart-count" id="cartCount">٠ أصناف</span>
+        <span class="cart-total" id="cartTotal">٠ ل.س</span>
+      </div>
+      <button class="btn" type="button" id="checkoutBtn">إتمام الطلب</button>
+    </div>
+  </div>
+
+  <!-- ===== نافذة الحساب: دخول / حساب جديد =====
+       بتنفتح من أيقونة الحساب، أو تلقائياً وقت يضغط «إتمام الطلب»
+       وهو مو مسجّل. السلة بتضل محفوظة وراها. -->
+  <dialog class="co-dialog" id="authDialog" aria-labelledby="authTitle">
+    <div class="co-box">
+      <h2 class="co-title" id="authTitle">حسابك بدهب</h2>
+      <p class="auth-why" id="authWhy" hidden>
+        منحتاج نعرف مين أنت ووين نوصّل حتى يوصلك طلبك صح.
+        دقيقة وبتخلص، وسلتك بتضل متل ما هي.
+      </p>
+
+      <div class="tabs" role="tablist">
+        <button class="tab is-on" id="tabLogin" role="tab" type="button" aria-selected="true">دخول</button>
+        <button class="tab" id="tabSignup" role="tab" type="button" aria-selected="false">حساب جديد</button>
+      </div>
+
+      <!-- دخول -->
+      <form class="gate-form" id="loginForm">
+        <label class="lbl" for="loginPhone">رقم الموبايل</label>
+        <input class="field-input" id="loginPhone" type="tel" inputmode="numeric"
+               autocomplete="tel" placeholder="09xxxxxxxx" required>
+
+        <label class="lbl" for="loginPw">كلمة السر</label>
+        <input class="field-input" id="loginPw" type="password"
+               autocomplete="current-password" placeholder="••••••" required>
+
+        <button class="btn full" type="submit" id="loginBtn">دخول</button>
+      </form>
+
+      <!-- حساب جديد -->
+      <form class="gate-form" id="signupForm" hidden>
+        <label class="lbl" for="suName">الاسم</label>
+        <input class="field-input" id="suName" type="text" autocomplete="name"
+               placeholder="اسمك الكامل" maxlength="60" required>
+
+        <label class="lbl" for="suPhone">رقم الموبايل</label>
+        <input class="field-input" id="suPhone" type="tel" inputmode="numeric"
+               autocomplete="tel" placeholder="09xxxxxxxx" required>
+
+        <label class="lbl" for="suPw">كلمة السر</label>
+        <input class="field-input" id="suPw" type="password"
+               autocomplete="new-password" placeholder="٦ خانات على الأقل" required>
+
+        <button class="btn full" type="submit" id="signupBtn">إنشاء الحساب</button>
+      </form>
+
+      <p class="err-msg" id="gateErr" role="alert"></p>
+
+      <button class="btn ghost full" type="button" id="authCloseBtn">كمّل تصفّح</button>
+    </div>
+  </dialog>
+
+  <!-- ===== نافذة الحساب وهو مسجّل دخول ===== -->
+  <dialog class="co-dialog" id="accountDialog" aria-labelledby="accTitle">
+    <div class="co-box">
+      <h2 class="co-title" id="accTitle">حسابك</h2>
+
+      <div class="acc-who">
+        <span class="acc-avatar" aria-hidden="true">
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#user"></use></svg>
+        </span>
+        <span class="acc-text">
+          <strong id="accName">—</strong>
+          <small id="accPhone"></small>
+        </span>
+      </div>
+
+      <div class="divider"><span></span><i></i><span></span></div>
+
+      <p class="acc-addr" id="accAddr" hidden></p>
+
+      <div class="co-actions">
+        <button class="btn full" type="button" id="myOrdersBtn">طلباتي</button>
+        <button class="btn ghost full" type="button" id="accCloseBtn">تمام</button>
+        <button class="btn ghost full" type="button" id="logoutBtn">تسجيل خروج</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===== طلباتي — حالة كل طلب، بتتحدّث لحالها =====
+       الزبون بيسأل «وين صار طلبي؟» — هون بيشوف الجواب بدون
+       ما يتصل. الحالة بتتغيّر من الداشبورد وبتوصل لهون فوراً. -->
+  <dialog class="co-dialog" id="ordersDialog" aria-labelledby="ordTitle">
+    <div class="co-box">
+      <h2 class="co-title" id="ordTitle">طلباتي</h2>
+
+      <div class="ord-list" id="ordList">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+
+      <div class="co-actions">
+        <button class="btn full" type="button" id="ordCloseBtn">تمام</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===== نافذة التأكيد ===== -->
+  <dialog class="co-dialog" id="checkoutDialog" aria-labelledby="coTitle">
+    <form method="dialog" class="co-box" id="checkoutForm">
+      <h2 class="co-title" id="coTitle">تأكيد الطلب</h2>
+
+      <div class="co-lines" id="coLines"></div>
+
+      <div class="divider"><span></span><i></i><span></span></div>
+
+      <label class="lbl" for="coAddress">العنوان</label>
+      <input class="field-input" id="coAddress" type="text" maxlength="200"
+             placeholder="الحي، الشارع، أقرب نقطة دالّة" required>
+
+      <label class="lbl" for="coNote">ملاحظات <small>(اختياري)</small></label>
+      <input class="field-input" id="coNote" type="text" maxlength="300"
+             placeholder="بدون بصل، جرس خربان...">
+
+      <p class="co-total">المجموع: <strong id="coTotal">٠</strong> ل.س</p>
+      <p class="err-msg" id="coErr" role="alert"></p>
+
+      <div class="co-actions">
+        <button class="btn full" type="button" id="confirmBtn">تأكيد وإرسال</button>
+        <button class="btn ghost full" type="button" id="cancelBtn">رجوع</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===== تم الإرسال ===== -->
+  <dialog class="co-dialog" id="doneDialog" aria-labelledby="doneTitle">
+    <div class="co-box done-box">
+      <span class="done-mark" aria-hidden="true">✓</span>
+      <h2 class="co-title" id="doneTitle">وصلنا طلبك</h2>
+      <p class="done-sub">
+        رح نتصل فيك لتأكيد الطلب والوقت،
+        وبتقدر تتابع حالته من «طلباتي».
+      </p>
+
+      <div class="co-actions">
+        <button class="btn full" type="button" id="doneTrackBtn">تابع طلبك</button>
+        <button class="btn ghost full" type="button" id="doneBtn">تمام</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="assets/js/order.js"></script>
+</body>
+</html>
