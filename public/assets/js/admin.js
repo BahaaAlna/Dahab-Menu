@@ -19,7 +19,7 @@ import {
   onSnapshot, query, orderBy, writeBatch,
 } from "./firebase.js";
 import {
-  COLLECTIONS, DEFAULT_ICON, PRICE_STEP,
+  COLLECTIONS, PRICE_STEP,
   PUBLIC_MENU, FEATURE_FLAGS,
 } from "./config.js";
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
@@ -219,8 +219,39 @@ function startListening() {
     itemsReady = true;
     render();
     scheduleAggregateWrite();
+    clearStoredIcons();
   });
   watchFeatureFlags();
+}
+
+/* ============================================================
+   تنظيف الرموز التعبيرية المخزَّنة
+
+   القائمة بلا إيموجي، لكن أقساماً قديمة ما زالت تحمله في Firestore.
+   تُمسَح مرة واحدة عند فتح اللوحة، ثم تُعاد كتابة النسخة المجمّعة.
+   ============================================================ */
+
+let iconsCleared = false;
+
+async function clearStoredIcons() {
+  if (iconsCleared || !sectionsReady || !itemsReady) return;
+  iconsCleared = true;
+
+  const dirtySecs = sections.filter((s) => s.icon);
+  const dirtyItems = items.filter((i) => i.sectionIcon);
+  if (!dirtySecs.length && !dirtyItems.length) return;
+
+  try {
+    // الدفعة الواحدة تتّسع لـ 500 كتابة، والقائمة أقل من مئة
+    const batch = writeBatch(db);
+    dirtySecs.forEach((s) => batch.update(doc(db, COLLECTIONS.sections, s.id), { icon: "" }));
+    dirtyItems.forEach((i) => batch.update(doc(db, COLLECTIONS.items, i.id), { sectionIcon: "" }));
+    await batch.commit();
+    scheduleAggregateWrite();
+  } catch (err) {
+    console.error("icon cleanup error:", err);
+    iconsCleared = false;
+  }
 }
 
 /* ============================================================
@@ -269,7 +300,6 @@ function sectionCardHtml(sec, secItems) {
   return `<div class="section-card ${collapsed}" data-sid="${sec.id}">
       <div class="section-header" onclick="window.__toggleSec('${sec.id}')">
         <div class="section-header-left">
-          <span class="icon">${sec.icon || DEFAULT_ICON}</span>
           <span class="title">${escapeHtml(sec.name)}</span>
           <span class="badge">${secItems.length} صنف</span>
         </div>
@@ -440,7 +470,6 @@ $("addSectionBtn").addEventListener("click", () => {
   editingSecId = null;
   $("secModalTitle").textContent = "قسم جديد";
   $("secName").value = "";
-  $("secIcon").value = DEFAULT_ICON;
   openModal("sectionModal");
 });
 
@@ -450,18 +479,16 @@ window.__editSec = (sid) => {
   editingSecId = sid;
   $("secModalTitle").textContent = "تعديل قسم";
   $("secName").value = sec.name;
-  $("secIcon").value = sec.icon || DEFAULT_ICON;
   openModal("sectionModal");
 };
 
 $("secSaveBtn").addEventListener("click", async () => {
   const name = $("secName").value.trim();
-  const icon = $("secIcon").value.trim() || DEFAULT_ICON;
   if (!name) return toast("يُرجى إدخال اسم القسم", true);
 
   try {
     if (editingSecId) {
-      await updateDoc(doc(db, COLLECTIONS.sections, editingSecId), { name, icon });
+      await updateDoc(doc(db, COLLECTIONS.sections, editingSecId), { name, icon: "" });
       // تحديث اسم القسم ورمزه داخل جميع أصنافه
       const batch = writeBatch(db);
       items
@@ -469,7 +496,7 @@ $("secSaveBtn").addEventListener("click", async () => {
         .forEach((i) =>
           batch.update(doc(db, COLLECTIONS.items, i.id), {
             sectionName: name,
-            sectionIcon: icon,
+            sectionIcon: "",
           })
         );
       await batch.commit();
@@ -478,7 +505,7 @@ $("secSaveBtn").addEventListener("click", async () => {
       const maxOrder = sections.reduce((m, s) => Math.max(m, s.order || 0), -1);
       await setDoc(doc(db, COLLECTIONS.sections, "sec_" + Date.now()), {
         name,
-        icon,
+        icon: "",
         order: maxOrder + 1,
       });
       toast("تمت إضافة القسم");
@@ -607,7 +634,7 @@ async function writeAggregate() {
       sections: [...sections].sort(byOrder).map((s) => ({
         id: s.id,
         name: s.name,
-        icon: s.icon || DEFAULT_ICON,
+        icon: "",
         order: s.order || 0,
       })),
       // المعرّف لا غنى عنه: السلة في صفحة الطلب تُفهرَس به، ولولاه
