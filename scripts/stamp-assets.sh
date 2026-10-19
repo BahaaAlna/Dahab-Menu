@@ -24,4 +24,8 @@ find "$DIR" -maxdepth 1 -name '*.html' -exec \
 find "$DIR/assets/js" -name '*.js' -exec \
   sed -i -E "s#(from \"\./[^\"?]+\.js)\"#\1?v=$V\"#g" {} +
 
+# وحدات JS: الاستيراد الديناميكي  (import("./x.js"))
+find "$DIR/assets/js" -name '*.js' -exec \
+  sed -i -E "s#(import\(\"\./[^\"?]+\.js)\"\)#\1?v=$V\")#g" {} +
+
 echo "stamped assets with v=$V"

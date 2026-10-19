@@ -6,12 +6,20 @@
    فيظهر أثر التبديل على الموقع المنشور فوراً ودون إعادة نشر.
 
    القيمة الافتراضية لكل ميزة هي الإيقاف: إذا غابت الوثيقة أو
-   تعذّرت قراءتها، تبقى الميزتان مخفيتين عن الزبائن. وهذا مقصود،
-   إذ يُفضَّل أن تختفي ميزة جاهزة على أن تظهر ميزة غير جاهزة.
+   تعذّرت قراءتها ولا نسخة محفوظة، تبقى الميزتان مخفيتين عن
+   الزبائن. وهذا مقصود، إذ يُفضَّل أن تختفي ميزة جاهزة على أن
+   تظهر ميزة غير جاهزة.
+
+   ⟶ السرعة: صفحة الترحيب كانت تنتظر تحميل مكتبة Firebase كاملة
+   ثم اتصالاً مفتوحاً بالخادم قبل أن تُظهر الخيارين، فيرى الزبون
+   خياراً واحداً ثم يحتاج إلى تحديث الصفحة. والترتيب الآن:
+     ١. آخر قيم معروفة من تخزين المتصفح — تُرسَم في الحال.
+     ٢. قراءة واحدة خفيفة عبر REST (طلب fetch عادي، بلا مكتبة).
+     ٣. استماع مباشر عبر المكتبة يُحمَّل في الخلفية، لتصل التغييرات
+        لاحقاً دون تحديث.
    ============================================================ */
 
-import { db, doc, getDoc, onSnapshot } from "./firebase.js";
-import { FEATURE_FLAGS } from "./config.js";
+import { FEATURE_FLAGS, firebaseConfig } from "./config.js";
 import { IS_LOCAL } from "./dev-mode.js";
 
 /** الحالة الآمنة التي يُرجَع إليها عند أي خطأ */
@@ -20,15 +28,17 @@ export const ALL_OFF = Object.freeze({ delivery: false, table: false });
 /** كل الميزات مفتوحة — تُستعمل على جهاز التطوير وحده */
 const ALL_ON = Object.freeze({ delivery: true, table: true });
 
+/** مفتاح التخزين المحلي لآخر قيم معروفة */
+const CACHE_KEY = "dahab:features";
+
+/** أقصى انتظار لردّ الخادم قبل اعتماد البديل (بالملّي ثانية) */
+const READ_TIMEOUT = 6000;
+
 /* ---------- وضع التطوير المحلي ----------
    وثيقة المفاتيح تعيش في Firestore، وقراءتها من جهاز التطوير
-   مرفوضة، فتُعتمد الحالة الآمنة وتختفي الميزتان. والنتيجة أن
-   من يطوّر الميزتين لا يراهما أصلاً: صفحة الترحيب تعرض سطر
-   «قيد التجهيز»، وصفحة الطلب تعيده إلى الترحيب فوراً.
-
-   لذلك تُفتح الميزتان دائماً على العناوين المحلية، ودون أي
-   اتصال بـ Firestore. أما الموقع المنشور فلا يتغيّر فيه شيء:
-   تبقى المفاتيح وحدها هي الفيصل. */
+   مرفوضة أحياناً، فتُفتح الميزتان دائماً على العناوين المحلية دون
+   أي اتصال. أما الموقع المنشور فلا يتغيّر فيه شيء: تبقى المفاتيح
+   وحدها هي الفيصل. */
 
 /** لا تُعدّ الميزة مفعّلة إلا إذا كانت القيمة true صراحةً */
 function normalize(data) {
@@ -36,6 +46,53 @@ function normalize(data) {
     delivery: data?.delivery === true,
     table: data?.table === true,
   };
+}
+
+/* ---------- آخر قيم معروفة ---------- */
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? normalize(JSON.parse(raw)) : null;
+  } catch (_) {
+    return null;   // تخزين محجوب أو تالف: كأنه غير موجود
+  }
+}
+
+function writeCache(flags) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(flags));
+  } catch (_) { /* لا يضرّ: يُقرأ من الخادم في الزيارة التالية */ }
+}
+
+/* ---------- قراءة REST ----------
+   طلب fetch واحد إلى واجهة Firestore العامة، يصل في أجزاء من
+   الثانية لأنه لا ينتظر مكتبة ولا اتصالاً مفتوحاً. والقراءة مسموحة
+   للجميع بحكم القواعد. وثيقة غائبة (404) تعني: كل شيء مطفأ. */
+async function fetchFlags() {
+  const { projectId, apiKey } = firebaseConfig;
+  const url =
+    "https://firestore.googleapis.com/v1/projects/" + projectId +
+    "/databases/(default)/documents/" +
+    FEATURE_FLAGS.collection + "/" + FEATURE_FLAGS.doc +
+    "?key=" + encodeURIComponent(apiKey);
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), READ_TIMEOUT);
+
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+    if (res.status === 404) return { ...ALL_OFF };
+    if (!res.ok) throw new Error("features http " + res.status);
+
+    const f = (await res.json()).fields || {};
+    return normalize({
+      delivery: f.delivery?.booleanValue,
+      table: f.table?.booleanValue,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** يستمع إلى المفاتيح وينادي cb عند كل تغيير.
@@ -47,37 +104,59 @@ export function subscribeFeatures(cb) {
     return () => {};
   }
 
-  return onSnapshot(
-    doc(db, FEATURE_FLAGS.collection, FEATURE_FLAGS.doc),
-    (snap) => cb(normalize(snap.exists() ? snap.data() : null)),
-    (err) => {
-      console.error("features error:", err);
-      cb(ALL_OFF);
-    }
-  );
+  let stopped = false;
+  let unsubscribe = () => {};
+  let known = readCache();
+  let delivered = false;
+
+  const push = (flags) => {
+    if (stopped) return;
+    known = flags;
+    delivered = true;
+    writeCache(flags);
+    cb(flags);
+  };
+
+  // ١. آخر قيم معروفة: الرسم الفوري
+  if (known) {
+    delivered = true;
+    cb(known);
+  }
+
+  // ٢. قراءة REST الخفيفة
+  fetchFlags().then(push).catch((err) => {
+    console.error("features error:", err);
+    if (!delivered) push({ ...ALL_OFF });
+  });
+
+  // ٣. استماع مباشر في الخلفية — المكتبة تُحمَّل بعد أن رُسمت الصفحة
+  import("./firebase.js").then(({ db, doc, onSnapshot }) => {
+    if (stopped) return;
+    unsubscribe = onSnapshot(
+      doc(db, FEATURE_FLAGS.collection, FEATURE_FLAGS.doc),
+      (snap) => push(normalize(snap.exists() ? snap.data() : null)),
+      (err) => console.error("features listen error:", err)
+    );
+  }).catch((err) => console.error("features sdk error:", err));
+
+  return () => {
+    stopped = true;
+    unsubscribe();
+  };
 }
 
-/** أقصى انتظار لردّ Firestore قبل اعتماد الحالة الآمنة (بالملّي ثانية).
- *  بدونه قد تبقى الصفحة معلّقة إلى ما لا نهاية عند انقطاع الشبكة،
- *  لأن Firestore يعيد المحاولة بصمت. */
-const READ_TIMEOUT = 4000;
-
 /** قراءة واحدة — للصفحات التي يكفيها التحقق مرة واحدة عند الفتح.
- *  تُرجع ALL_OFF عند أي خطأ أو تأخّر، فالميزة لا تُفتح إلا بتأكيد. */
+ *  عند تعذّر الوصول تُرجع آخر قيم معروفة، وإلا ALL_OFF: الميزة لا
+ *  تُفتح إلا بتأكيد أو بسابقة تأكيد. */
 export async function readFeatures() {
   if (IS_LOCAL) return ALL_ON;
 
-  const read = (async () => {
-    const snap = await getDoc(doc(db, FEATURE_FLAGS.collection, FEATURE_FLAGS.doc));
-    return normalize(snap.exists() ? snap.data() : null);
-  })();
-
-  const timeout = new Promise((resolve) => setTimeout(() => resolve(ALL_OFF), READ_TIMEOUT));
-
   try {
-    return await Promise.race([read, timeout]);
+    const flags = await fetchFlags();
+    writeCache(flags);
+    return flags;
   } catch (err) {
     console.error("features error:", err);
-    return ALL_OFF;
+    return readCache() || { ...ALL_OFF };
   }
 }
