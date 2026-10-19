@@ -25,6 +25,7 @@ import {
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
 import { mountOrders } from "./admin-orders.js";
 import { mountQr } from "./admin-qr.js";
+import { mountReport } from "./admin-report.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -98,6 +99,7 @@ function openPanel() {
      للموظف وحده في القواعد، وتركيبها قبل ذلك خطأ صلاحيات مؤكَّد. */
   mountOrders();
   mountQr();
+  mountReport();
 }
 
 function showLogin() {

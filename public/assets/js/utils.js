@@ -45,6 +45,41 @@ export function normalizePhone(raw) {
 
   if (d.startsWith("0")) d = d.slice(1);
 
-  // رقم الهاتف السوري: تسع خانات تبدأ بالرقم 9
-  return /^9\d{8}$/.test(d) ? "963" + d : null;
+  // جوال: تسع خانات تبدأ بالرقم 9.  أرضي: تسع خانات تبدأ برمز المحافظة 1–8
+  return /^[1-9]\d{8}$/.test(d) ? "963" + d : null;
+}
+
+/* ============================================================
+   كتابة الرقم للعرض
+
+     الجوال   0912 345 678   (4 – 3 – 3)
+     الأرضي   033 4567 890   (3 – 4 – 3)
+
+   تقبل الصيغة الموحَّدة (963…) أو المحلية (0…). وما لا يُعرَف شكله
+   يُعاد كما هو، فلا يُخفى رقم قديم مخزَّن بصيغة غريبة.
+   ============================================================ */
+function groupLocal(d) {
+  // d: أرقام محلية تبدأ بصفر. الجوال يبدأ بـ 09، وما سواه أرضي.
+  const sizes = d.startsWith("09") ? [4, 3, 3] : [3, 4, 3];
+  const parts = [];
+  let i = 0;
+  for (const n of sizes) {
+    if (i >= d.length) break;
+    parts.push(d.slice(i, i + n));
+    i += n;
+  }
+  return parts.join(" ");
+}
+
+export function formatPhone(value) {
+  const n = normalizePhone(value);
+  return n ? groupLocal("0" + n.slice(3)) : String(value ?? "");
+}
+
+/** تنسيق حيّ أثناء الكتابة: يضع المسافات تلقائياً ولا يقبل أكثر من عشر خانات */
+export function formatPhoneTyping(raw) {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.startsWith("00963")) d = "0" + d.slice(5);
+  else if (d.startsWith("963")) d = "0" + d.slice(3);
+  return groupLocal(d.slice(0, 10));
 }

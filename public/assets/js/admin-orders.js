@@ -18,7 +18,7 @@ import {
   query, orderBy, limit, onSnapshot,
 } from "./firebase.js";
 import { CURRENCY, ORDER_STATUS } from "./config.js";
-import { escapeHtml } from "./utils.js";
+import { escapeHtml, formatPhone } from "./utils.js";
 import { mountAlerts } from "./admin-alert.js";
 
 const $ = (id) => document.getElementById(id);
@@ -121,8 +121,8 @@ function whoHtml(o) {
   if (c.name) bits.push('<b>' + escapeHtml(c.name) + "</b>");
   // الرقم قابل للنقر: الموظف يتصل منه مباشرة بدل نسخه
   if (c.phone) {
-    bits.push('<a class="ord-tel" href="tel:' + escapeHtml(c.phone) + '">' +
-      escapeHtml(c.phone) + "</a>");
+    bits.push('<a class="ord-tel" dir="ltr" href="tel:' + escapeHtml(c.phone) + '">' +
+      escapeHtml(formatPhone(c.phone)) + "</a>");
   }
   if (c.address) bits.push('<span class="ord-addr">' + escapeHtml(c.address) + "</span>");
 

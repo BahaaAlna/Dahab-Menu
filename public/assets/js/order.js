@@ -15,12 +15,18 @@
    ============================================================ */
 
 import { mountOrderPage } from "./order-core.js";
-import { normalizePhone } from "./utils.js";
+import { normalizePhone, formatPhoneTyping } from "./utils.js";
 import { MIN_DELIVERY_TOTAL, CURRENCY } from "./config.js";
 
 const $ = (id) => document.getElementById(id);
 
-const BAD_PHONE = "رقم الهاتف غير صحيح، والصيغة المطلوبة 09xxxxxxxx.";
+const BAD_PHONE =
+  "رقم الهاتف غير صحيح. الجوال مثل 0912 345 678، والأرضي مثل 033 4567 890.";
+
+// المسافات تُوضَع تلقائياً أثناء الكتابة: جوال 4-3-3، وأرضي 3-4-3
+$("coPhone").addEventListener("input", (e) => {
+  e.target.value = formatPhoneTyping(e.target.value);
+});
 
 await mountOrderPage({
   feature: "delivery",

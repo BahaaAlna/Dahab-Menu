@@ -94,6 +94,10 @@
           <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#scan"></use></svg>
           <span>رموز الطاولات</span>
         </button>
+        <button class="side-item" type="button" data-pane="report">
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#chart"></use></svg>
+          <span>التقارير</span>
+        </button>
         <button class="side-item" type="button" data-pane="settings">
           <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#table"></use></svg>
           <span>الإعدادات</span>
@@ -188,7 +192,52 @@
         </dialog>
       </section>
 
-      <!-- ===================== الإعدادات ===================== -->
+      <!-- ===================== التقارير ===================== -->
+      <section class="pane" id="pane-report" hidden>
+        <div class="pane-head">
+          <h2 class="pane-title">تقرير المبيعات</h2>
+        </div>
+
+        <p class="pane-note">
+          اختر مدة لعرض إجمالي المبيعات وعدد الطلبات والأصناف الأكثر مبيعاً.
+          الطلبات الملغاة لا تدخل في المبيعات.
+        </p>
+
+        <div class="rep-quick">
+          <button class="btn ghost small" type="button" id="repToday">اليوم</button>
+          <button class="btn ghost small" type="button" id="repYesterday">أمس</button>
+          <button class="btn ghost small" type="button" id="repWeek">آخر ٧ أيام</button>
+          <button class="btn ghost small" type="button" id="repMonth">هذا الشهر</button>
+        </div>
+
+        <div class="qr-bar rep-bar-form">
+          <label class="qr-field">
+            <span>من</span>
+            <input class="field-input" type="date" id="repFrom">
+          </label>
+          <label class="qr-field">
+            <span>إلى</span>
+            <input class="field-input" type="date" id="repTo">
+          </label>
+          <button class="btn small" type="button" id="repLoadBtn">عرض التقرير</button>
+          <button class="btn ghost small" type="button" id="repPrintBtn">طباعة</button>
+          <button class="btn ghost small" type="button" id="repCsvBtn">تنزيل CSV</button>
+        </div>
+
+        <p class="err-msg" id="repErr" role="alert"></p>
+
+        <div class="rep-sheet">
+          <div class="rep-print-head">
+            <p class="rep-print-brand">دهب</p>
+            <p class="rep-print-sub">تقرير المبيعات</p>
+            <p class="rep-print-title" id="repPrintTitle"></p>
+          </div>
+          <div id="repOut"></div>
+          <p class="rep-print-foot" id="repPrintFoot"></p>
+        </div>
+      </section>
+
+      <!-- ===================== الإعدادات =====================
       <!-- ===================== الأصناف ===================== -->
       <section class="pane" id="pane-items" hidden>
         <div class="pane-head">
