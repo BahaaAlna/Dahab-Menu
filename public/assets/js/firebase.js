@@ -33,9 +33,9 @@ export {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
+/* تسجيل الدخول للموظف وحده: حسابات الزبائن أُزيلت، فلم يبقَ
+   استعمال لـ signInAnonymously ولا لإنشاء الحسابات. */
 export {
-  signInAnonymously,
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,

@@ -63,6 +63,13 @@ const server = http.createServer((req, res) => {
     filePath = path.join(filePath, "index.html");
   }
 
+  /* عنوان بلا لاحقة ‎.html‎ → الملف نفسه. GitHub Pages يفعل هذا
+     تلقائياً، فنحاكيه هنا كي تعمل روابط ‎/menu‎ و‎/order‎ محلياً
+     تماماً كما تعمل على الموقع المنشور. */
+  if (!path.extname(filePath) && fs.existsSync(filePath + ".html")) {
+    filePath += ".html";
+  }
+
   fs.readFile(filePath, (err, data) => {
     const stamp = new Date().toTimeString().slice(0, 8);
     if (err) {
@@ -103,8 +110,10 @@ server.listen(START_PORT, () => {
   ╚══════════════════════════════════════════════╝
 
     👋  صفحة الترحيب  ${base}/
-    🍽️  قائمة الطعام   ${base}/menu.html
-    🛠️  لوحة الإدارة   ${base}/admin.html
+    🍽️  قائمة الطعام   ${base}/menu
+    🛵  طلب دليفري     ${base}/order
+    🪑  طلب من الطاولة ${base}/table?t=3
+    🛠️  لوحة الإدارة   ${base}/admin
     🌱  رفع البيانات   ${base}/tools/seed.html
 
     للإيقاف: Ctrl + C

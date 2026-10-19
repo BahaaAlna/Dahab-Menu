@@ -8,11 +8,14 @@
    ============================================================ */
 
 /* ============================================================
-   👤  أيقونة الحساب — عائمة في الأعلى على اليسار
+   🧺  زرّ السلة — عائم في الأعلى على اليسار
    تقابل زر «رجوع» في الأعلى على اليمين، بالحجم والطابع ذاتهما.
+
+   دائرة ذهبية ممتلئة لا مفرَّغة: هي الطريق الوحيد إلى إتمام
+   الطلب بعد إزالة الشريط السفلي، فيجب أن تُرى لا أن تُبحَث عنها.
    ============================================================ */
 
-.profile-btn {
+.cart-btn {
   position: fixed;
   top: 12px;
   left: 12px;
@@ -23,50 +26,64 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid var(--line-soft);
-  background: rgba(15, 15, 15, 0.72);
-  backdrop-filter: blur(8px);
-  color: var(--gold);
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: var(--black);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  box-shadow: var(--glow-soft);
+  transition: background 0.15s, transform 0.15s;
+  animation: cartPop 0.28s cubic-bezier(0.34, 1.6, 0.64, 1) both;
 }
 
-.profile-btn .ic {
+/* الظهور عند أول صنف: قفزة قصيرة تلفت النظر إلى أن للسلة محتوى */
+@keyframes cartPop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.cart-btn .ic {
   width: 20px;
   height: 20px;
 }
 
-/* بعد تسجيل الدخول: دائرة ذهبية ممتلئة تحمل أول حرف من الاسم */
-.profile-btn.is-in {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--black);
-}
-
-.profile-initial {
-  font-size: 1.05rem;
+/* عدّاد الأصناف: قرص داكن على حافة الزرّ، في الجهة البعيدة عن
+   حافة الشاشة كي لا يُقتطع منه شيء */
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1.5px solid var(--gold);
+  background: var(--black);
+  color: var(--gold-light);
+  font-size: 0.72rem;
   font-weight: 700;
   line-height: 1;
 }
 
-.profile-btn:active {
+.cart-btn:active {
   transform: scale(0.94);
 }
 
-.profile-btn:focus-visible {
+.cart-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--wash-gold);
 }
 
 @media (hover: hover) {
-  .profile-btn:hover {
-    border-color: var(--gold);
-    background: var(--wash-gold);
-  }
-
-  .profile-btn.is-in:hover {
+  .cart-btn:hover {
     background: var(--gold-light);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-btn { animation: none; }
 }
 
 /* ============================================================
@@ -262,43 +279,8 @@
   box-shadow: 0 0 0 3px var(--wash-gold);
 }
 
-.cart-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
-  background: rgba(15, 15, 15, 0.92);
-  backdrop-filter: blur(10px);
-  animation: cartUp 0.25s ease both;
-}
-
-@keyframes cartUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.cart-sum {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.cart-count {
-  font-size: 0.82rem;
-  color: rgba(245, 240, 230, 0.60);
-}
-
-.cart-total {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--gold-light);
-}
-
 /* ============================================================
-   النوافذ — تسجيل، حساب، تأكيد، تم
+   النوافذ — تأكيد الطلب ثم الإتمام
    ============================================================ */
 
 .co-dialog {
@@ -331,56 +313,7 @@
   margin-bottom: 18px;
 }
 
-/* ---------- نافذة التسجيل ---------- */
-
-/* تظهر فقط عند فتح النافذة من «إتمام الطلب»، وتشرح سبب
-   طلب التسجيل في هذه اللحظة بالذات. */
-.auth-why {
-  margin: -8px 0 18px;
-  text-align: center;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: rgba(245, 240, 230, 0.60);
-}
-
-.tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 20px;
-  padding: 4px;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-md);
-  background: var(--surface-sunken);
-}
-
-.tab {
-  flex: 1;
-  padding: 10px 8px;
-  border: none;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: rgba(245, 240, 230, 0.55);
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.tab.is-on {
-  background: var(--wash-gold);
-  color: var(--gold-light);
-}
-
-.tab:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--wash-gold);
-}
-
-.gate-form {
-  display: flex;
-  flex-direction: column;
-}
+/* ---------- عناوين الخانات في نافذة التأكيد ---------- */
 
 .lbl {
   margin-bottom: 7px;
@@ -394,69 +327,11 @@
   color: rgba(245, 240, 230, 0.45);
 }
 
-.gate-form .field-input {
-  margin-bottom: 16px;
-}
-
-/* الرقم وكلمة المرور دائماً من اليسار إلى اليمين وإن كانت الصفحة عربية */
-#loginPhone, #suPhone, #loginPw, #suPw {
+/* الرقم يُكتب من اليسار إلى اليمين وإن كانت الصفحة عربية، ويبقى
+   محاذياً لليمين كبقية الخانات */
+#coPhone {
   direction: ltr;
   text-align: right;
-}
-
-#authCloseBtn {
-  margin-top: 14px;
-}
-
-/* ---------- نافذة الحساب ---------- */
-
-.acc-who {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.acc-avatar {
-  width: 46px;
-  height: 46px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gold);
-  color: var(--black);
-}
-
-.acc-avatar .ic {
-  width: 24px;
-  height: 24px;
-}
-
-.acc-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.acc-text strong {
-  font-size: 1.05rem;
-  color: var(--cream);
-}
-
-.acc-text small {
-  direction: ltr;
-  text-align: right;
-  font-size: 0.85rem;
-  color: rgba(245, 240, 230, 0.50);
-}
-
-.acc-addr {
-  margin: 16px 0 4px;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: rgba(245, 240, 230, 0.65);
 }
 
 /* ---------- نافذة التأكيد ---------- */
@@ -470,21 +345,137 @@
   margin-bottom: 18px;
 }
 
+/* السطر قابل للتعديل: اسم، ثم أزرار الكمية والمجموع والحذف.
+   على الهاتف يأخذ الاسم سطراً كاملاً وتنزل الأزرار تحته، فثلاثة
+   عناصر وأزرار في سطر واحد بعرض 375px تتلاصق ويصعب لمسها. */
 .co-line {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-faint);
   font-size: 0.95rem;
 }
 
-.co-line b {
+.co-line:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.co-line-name {
+  flex: 1 1 100%;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+@media (min-width: 430px) {
+  .co-line-name { flex: 1 1 auto; }
+}
+
+.co-line-qty {
+  flex-shrink: 0;
+}
+
+/* يتمدّد ليدفع زرّ الحذف إلى آخر السطر */
+.co-line-sum {
+  flex: 1 1 auto;
+  color: var(--gold-light);
+  white-space: nowrap;
+}
+
+/* النقصان يتوقّف عند واحد، والحذف طريقه زرّ × وسؤاله */
+.qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.qty-btn:disabled:active {
+  transform: none;
+}
+
+/* ---------- سؤال تأكيد الحذف ---------- */
+
+.co-line.is-asking .co-line-name {
   color: var(--gold-light);
 }
 
-.co-line span:last-child {
-  color: var(--gold-light);
-  white-space: nowrap;
+.co-ask {
+  display: inline-flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+
+.btn-ask {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: rgba(245, 240, 230, 0.70);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-ask.is-yes {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn-ask:active {
+  transform: scale(0.95);
+}
+
+.btn-ask:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .btn-ask:hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  .btn-ask.is-yes:hover {
+    border-color: var(--red);
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--red);
+  }
+}
+
+.co-line-x {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(245, 240, 230, 0.45);
+  font-family: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.co-line-x:active {
+  transform: scale(0.92);
+}
+
+.co-line-x:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .co-line-x:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--red);
+  }
 }
 
 .co-dialog .lbl {
@@ -536,165 +527,92 @@
   color: rgba(245, 240, 230, 0.65);
 }
 
+
 /* ============================================================
-   📜  طلباتي — بطاقة لكل طلب مع حالته
+   🍽️  الطلب من الطاولة
+   تبني على كل ما سبق، وهنا ما يخصّ الطاولة وحدها: شريط الترحيب
+   برقمها، وشاشة «امسح رمز طاولتك» حين يغيب الرقم عن العنوان.
    ============================================================ */
 
-.ord-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  /* تمرّر القائمة وحدها، فيبقى زر «تمام» ظاهراً في الأسفل */
-  max-height: 56vh;
-  overflow-y: auto;
-  margin-bottom: 18px;
-}
-
-.ord {
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-md);
-  background: var(--surface-sunken);
-  padding: 14px;
-}
-
-.ord-head {
+/* شريط الترحيب — أول ما تقع عليه العين فوق القائمة، فيعرف
+   الزبون أن الطلب سيصل إلى طاولته هو قبل أن يبدأ لا بعد ما ينتهي */
+.table-banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--gold-deep);
+  border-radius: var(--r-md);
+  background: var(--wash-gold);
+  color: var(--cream);
+  font-size: 0.95rem;
+  text-align: center;
 }
 
-.ord-when {
-  font-size: 0.82rem;
-  color: rgba(245, 240, 230, 0.55);
-}
-
-/* شارة الحالة — يأتي اللون من tone في config.js */
-.ord-state {
+.table-banner .ic {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  padding: 4px 11px;
-  border: 1px solid currentColor;
-  border-radius: var(--r-pill);
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
+  color: var(--gold);
 }
 
-.ord-state.is-wait { color: var(--gold); }
-.ord-state.is-ok   { color: var(--gold-light); }
-.ord-state.is-go   { color: var(--gold-light); background: var(--wash-gold); }
-.ord-state.is-done { color: var(--green); }
-.ord-state.is-bad  { color: var(--red); }
-
-.ord-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ord-line {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.9rem;
-}
-
-.ord-line b {
+.table-banner b {
+  font-size: 1.2rem;
+  font-weight: 700;
   color: var(--gold-light);
 }
 
-.ord-line span:last-child {
-  color: var(--gold-light);
-  white-space: nowrap;
-}
-
-.ord-note {
-  margin-top: 10px;
-  font-size: 0.84rem;
-  line-height: 1.6;
-  color: rgba(245, 240, 230, 0.55);
-}
-
-.ord-foot {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line-faint);
-  font-size: 0.88rem;
-}
-
-.ord-foot strong {
-  font-size: 1.05rem;
-  color: var(--gold-light);
-}
-
-/* ---------- لا توجد طلبات أو حدث خطأ ---------- */
-
-.ord-empty,
-.ord-err {
-  padding: 26px 10px;
+/* تذكير برقم الطاولة داخل نافذة التأكيد: آخر فرصة ينتبه فيها
+   الزبون إلى أنه مسح رمز الطاولة المجاورة */
+.co-table {
+  margin-bottom: 16px;
   text-align: center;
   font-size: 0.92rem;
-  line-height: 1.8;
-  color: rgba(245, 240, 230, 0.60);
+  color: rgba(245, 240, 230, 0.70);
 }
 
-.ord-err {
-  color: #f87171;
-}
-
-/* ============================================================
-   اختيار العنوان عند الدفع
-   العناوين المحفوظة خيارات جاهزة، وآخرها «عنوان آخر» يُظهر الحقل.
-   ============================================================ */
-
-.co-addr-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.co-addr {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 11px 12px;
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-sm);
-  background: var(--surface-sunken);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.co-addr input {
-  margin-top: 3px;
-  accent-color: var(--gold);
-  flex-shrink: 0;
-}
-
-/* :has مدعوم في متصفحات الهواتف الحالية، وإن غاب
-   بقي الخيار مقروءاً بلا تمييز لونيّ — لا أكثر. */
-.co-addr:has(input:checked) {
-  border-color: var(--gold);
-  background: var(--wash-gold);
-}
-
-.co-addr-body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.co-addr-body b {
-  font-size: 0.92rem;
+.co-table b {
+  font-size: 1.1rem;
   color: var(--gold-light);
 }
 
-.co-addr-body small {
-  font-size: 0.82rem;
-  line-height: 1.6;
-  color: rgba(245, 240, 230, 0.60);
+/* ---------- لا رقم طاولة في العنوان ---------- */
+
+.table-gate {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 70px 16px 40px;
+}
+
+.gate-box {
+  width: 100%;
+  max-width: 340px;
+  padding: 28px 22px 22px;
+  text-align: center;
+}
+
+.gate-ic {
+  /* الأيقونة SVG فتحتاج توسيطاً صريحاً، ويُضبَط حجمها بالـ em من هنا */
+  font-size: 2rem;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+}
+
+.gate-title {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--gold-light);
+  text-shadow: var(--text-glow);
+}
+
+.gate-text {
+  margin: 12px 0 22px;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: rgba(245, 240, 230, 0.75);
 }

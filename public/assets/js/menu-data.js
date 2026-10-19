@@ -17,6 +17,26 @@ import { COLLECTIONS, PUBLIC_MENU } from "./config.js";
  * @param {(sections, items) => void} onData
  * @param {(err) => void} onError  يُنادى فقط عند إخفاق كل المسارات
  */
+/* ============================================================
+   حارس المعرّفات
+
+   المعرّف عماد السلة: به تُفهرَس الأصناف المختارة وبه يُحسَب
+   المجموع. وكانت لوحة الإدارة تكتب النسخة المجمّعة بلا معرّفات،
+   فصارت الأصناف كلها صنفاً واحداً مجهولاً ومجموعه صفر.
+
+   أُصلح مصدر الكتابة في admin.js، لكنّ الوثيقة المكتوبة قبل
+   الإصلاح تبقى في Firestore حتى يُعدَّل المنيو فتُعاد كتابتها.
+   فلا يُترك الزبون ينتظر ذلك: يُشتقّ هنا معرّف ثابت من القسم
+   والاسم، وهو ثابت بين كل تحميل وآخر فتصحّ السلة المحفوظة.
+   ============================================================ */
+function withIds(items) {
+  return items.map((it) =>
+    it && it.id
+      ? it
+      : { ...it, id: (it?.sectionId || "?") + ":" + (it?.name || "?") }
+  );
+}
+
 export function subscribeMenu(onData, onError) {
   let fellBack = false;
 
@@ -25,7 +45,7 @@ export function subscribeMenu(onData, onError) {
     (snap) => {
       const data = snap.exists() ? snap.data() : null;
       if (data && Array.isArray(data.sections) && Array.isArray(data.items)) {
-        onData(data.sections, data.items);
+        onData(data.sections, withIds(data.items));
       } else {
         useFallback();
       }

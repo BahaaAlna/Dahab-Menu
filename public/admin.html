@@ -7,13 +7,38 @@
 
   <link rel="icon" href="assets/img/logo.png">
 
+  <!-- الاتصال بخوادم Firebase يبدأ مع الـ HTML لا بعد تحميل الـ JS،
+       فيُوفَّر على الصفحة بحث DNS ومصافحة TLS عند أول نداء -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/admin.css">
+
+  <!-- شريط العنوان بلا ‎.html‎ — الخادم يقدّم الصفحة على الحالتين، وهذا تجميل للعنوان وحده -->
+  <script>
+    try {
+      if (location.pathname.endsWith(".html")) {
+        history.replaceState(null, "",
+          location.pathname.replace(/(index)?\.html$/, "") + location.search + location.hash);
+      }
+    } catch (_) { /* file:// لا يسمح بتعديل العنوان */ }
+  </script>
 </head>
 <body>
 
+  <!-- ===== ريثما تُستعاد الجلسة =====
+       استعادة الجلسة من المتصفح غير فورية، فلو ظهرت شاشة الدخول
+       في أثنائها لرآها الموظف المسجَّل ومضَتْ، فظنّ أن اللوحة
+       تُخرجه وتُدخله من تلقاء نفسها. لذلك لا تظهر واحدة منهما
+       حتى يُعرف الجواب. -->
+  <div class="boot" id="boot">
+    <div class="spinner"></div>
+  </div>
+
   <!-- ===== شاشة الدخول ===== -->
-  <div class="login-wrap" id="loginWrap">
+  <div class="login-wrap" id="loginWrap" hidden>
     <div class="frame login-box">
       <span class="corner tl"></span><span class="corner tr"></span>
       <span class="corner bl"></span><span class="corner br"></span>
@@ -24,7 +49,7 @@
       <div class="divider login-divider"><span></span><i></i><span></span></div>
 
       <input type="email" class="field-input login-input" id="emailInput"
-             placeholder="بريد الموظف" autocomplete="username" dir="ltr">
+             placeholder="بريد الموظف" autocomplete="username">
       <input type="password" class="field-input login-input" id="pwInput"
              placeholder="كلمة المرور" autocomplete="current-password">
       <button class="btn full" id="loginBtn">تسجيل الدخول</button>
@@ -49,7 +74,100 @@
       </div>
     </div>
 
+    <div class="dash">
+
+      <!-- ===== الشريط الجانبي =====
+           على الهاتف شريط تبويبات أفقي أعلى الصفحة، وعلى الشاشة
+           الأوسع عمود على اليمين. الأقسام تُبدَّل هنا دون تحميل
+           صفحة جديدة: الاستماع إلى Firestore قائم فلا يُقطَع. -->
+      <nav class="side" id="side" aria-label="أقسام اللوحة">
+        <button class="side-item is-on" type="button" data-pane="orders">
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#scooter"></use></svg>
+          <span>الطلبات</span>
+          <span class="side-count" id="navNewCount" hidden>٠</span>
+        </button>
+        <button class="side-item" type="button" data-pane="items">
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#dome"></use></svg>
+          <span>الأصناف</span>
+        </button>
+        <button class="side-item" type="button" data-pane="qr">
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#scan"></use></svg>
+          <span>رموز الطاولات</span>
+        </button>
+        <button class="side-item" type="button" data-pane="settings">
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#table"></use></svg>
+          <span>الإعدادات</span>
+        </button>
+      </nav>
+
     <div class="container">
+
+      <!-- ===================== الطلبات ===================== -->
+      <section class="pane" id="pane-orders">
+
+        <!-- طلب إذن التنبيه. لا يُطلَب الإذن عند فتح اللوحة، لأن
+             المتصفح يرفض طلباً بلا فعل من المستخدم ويحجبه للأبد.
+             فالضغط على «فعّل التنبيه» هو الفعل الذي يُجيزه. -->
+        <div class="alert-bar" id="alertBar" hidden>
+          <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#bell"></use></svg>
+          <div class="alert-text">
+            <b>نبّهني عند وصول طلب</b>
+            <small>صوت وإشعار، فلا يضيع طلب واللوحة مفتوحة على الشاشة.</small>
+          </div>
+          <button class="btn small" type="button" id="alertAllowBtn">فعّل التنبيه</button>
+          <button class="btn ghost small" type="button" id="alertLaterBtn">ليس الآن</button>
+        </div>
+
+        <div class="pane-head">
+          <h2 class="pane-title">الطلبات</h2>
+          <label class="ord-filter">
+            <input type="checkbox" id="ordHideDone">
+            <span>إخفاء المنتهية</span>
+          </label>
+        </div>
+
+        <div id="ordersList">
+          <div class="loading-full">
+            <div class="spinner"></div>
+            <p style="margin-top:16px;">جارٍ تحميل الطلبات...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== رموز الطاولات ===================== -->
+      <section class="pane" id="pane-qr" hidden>
+        <div class="pane-head">
+          <h2 class="pane-title">رموز الطاولات</h2>
+        </div>
+
+        <p class="pane-note">
+          لكل طاولة رمز خاص بها. يُطبَع ويُلصَق على الطاولة، فيفتح
+          للزبون صفحة الطلب ويُعرِّف المطبخ برقم طاولته.
+        </p>
+
+        <div class="qr-bar">
+          <label class="qr-field">
+            <span>من</span>
+            <input class="field-input" type="number" id="qrFrom" value="1" min="1" max="200">
+          </label>
+          <label class="qr-field">
+            <span>إلى</span>
+            <input class="field-input" type="number" id="qrTo" value="10" min="1" max="200">
+          </label>
+          <button class="btn small" type="button" id="qrMakeBtn">توليد</button>
+          <button class="btn ghost small" type="button" id="qrPrintBtn">طباعة</button>
+        </div>
+
+        <p class="err-msg" id="qrErr" role="alert"></p>
+        <div class="qr-grid" id="qrGrid"></div>
+      </section>
+
+      <!-- ===================== الإعدادات ===================== -->
+      <!-- ===================== الأصناف ===================== -->
+      <section class="pane" id="pane-items" hidden>
+        <div class="pane-head">
+          <h2 class="pane-title">الأصناف</h2>
+        </div>
 
       <!-- الإحصائيات -->
       <div class="stats" id="stats">
@@ -83,6 +201,33 @@
         </div>
       </div>
 
+      <!-- شريط الأدوات -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg class="ic search-ic" aria-hidden="true"><use href="assets/img/icons.svg#search"></use></svg>
+          <input type="text" class="field-input search" id="search" placeholder="البحث عن صنف...">
+        </div>
+        <button class="btn ghost small" id="expandAll">فتح الكل</button>
+        <button class="btn ghost small" id="collapseAll">طي الكل</button>
+      </div>
+
+      <!-- قائمة الأقسام (تُملأ من Firestore) -->
+      <div id="sectionsList">
+        <div class="loading-full">
+          <div class="spinner"></div>
+          <p style="margin-top:16px;">جارٍ تحميل القائمة...</p>
+        </div>
+      </div>
+
+      <button class="add-section" id="addSectionBtn">+ إضافة قسم جديد</button>
+      </section>
+
+      <!-- ===================== الإعدادات ===================== -->
+      <section class="pane" id="pane-settings" hidden>
+        <div class="pane-head">
+          <h2 class="pane-title">الإعدادات</h2>
+        </div>
+
       <!-- مفاتيح الميزات -->
       <div class="frame flags-card">
         <span class="corner sm tl"></span><span class="corner sm tr"></span>
@@ -112,24 +257,10 @@
         </label>
       </div>
 
-      <!-- شريط الأدوات -->
-      <div class="toolbar">
-        <input type="text" class="field-input search" id="search" placeholder="🔍 البحث عن صنف...">
-        <button class="btn ghost small" id="expandAll">فتح الكل</button>
-        <button class="btn ghost small" id="collapseAll">طي الكل</button>
-      </div>
+      </section>
 
-      <!-- قائمة الأقسام (تُملأ من Firestore) -->
-      <div id="sectionsList">
-        <div class="loading-full">
-          <div class="spinner"></div>
-          <p style="margin-top:16px;">جارٍ تحميل القائمة...</p>
-        </div>
-      </div>
-
-      <button class="add-section" id="addSectionBtn">+ إضافة قسم جديد</button>
-
-    </div>
+    </div><!-- /container -->
+    </div><!-- /dash -->
   </div>
 
   <!-- ===== النوافذ المنبثقة ===== -->
@@ -147,7 +278,7 @@
       </div>
       <div class="field">
         <label>رمز (إيموجي اختياري)</label>
-        <input type="text" class="field-input" id="secIcon" placeholder="🥤" maxlength="4">
+        <input type="text" class="field-input" id="secIcon" placeholder="مثلاً: 🥤" maxlength="4">
       </div>
       <div class="modal-actions">
         <button class="btn ghost small" onclick="closeModal('sectionModal')">إلغاء</button>

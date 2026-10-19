@@ -13,19 +13,29 @@
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/menu.css">
   <link rel="stylesheet" href="assets/css/order.css">
-  <link rel="stylesheet" href="assets/css/account.css">
+
+  <!-- شريط العنوان بلا ‎.html‎ — الخادم يقدّم الصفحة على الحالتين، وهذا تجميل للعنوان وحده -->
+  <script>
+    try {
+      if (location.pathname.endsWith(".html")) {
+        history.replaceState(null, "",
+          location.pathname.replace(/(index)?\.html$/, "") + location.search + location.hash);
+      }
+    } catch (_) { /* file:// لا يسمح بتعديل العنوان */ }
+  </script>
 </head>
 <body>
 
   <a class="back-link" href="./"><span aria-hidden="true">→</span> رجوع</a>
 
-  <!-- ===== أيقونة الحساب — عائمة في الأعلى على اليسار =====
-       يتصفّح الزبون ويملأ سلته دون حساب. وتفتح هذه الأيقونة
-       الحساب متى شاء، ولا يُطلَب التسجيل إلا عند الدفع. -->
-  <button class="profile-btn" type="button" id="profileBtn"
-          aria-label="الحساب" aria-haspopup="dialog">
-    <svg class="ic" id="profileIcon" aria-hidden="true"><use href="assets/img/icons.svg#user"></use></svg>
-    <span class="profile-initial" id="profileInitial" hidden></span>
+  <!-- ===== زرّ السلة — عائم في الأعلى على اليسار =====
+       لا يظهر والسلة فارغة، فلا معنى لزرّ يفتح لا شيء. وأول صنف
+       يُضاف يُظهره حاملاً عدد الأصناف، وضغطه يفتح نافذة التأكيد
+       مباشرة: الطلب والعنوان والإرسال في مكان واحد. -->
+  <button class="cart-btn" type="button" id="cartBtn" hidden
+          aria-label="سلة الطلب" aria-haspopup="dialog">
+    <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#bag"></use></svg>
+    <span class="cart-badge" id="cartBadge">٠</span>
   </button>
 
   <!-- ===== الطلب — مفتوح للكل من أول لحظة ===== -->
@@ -45,7 +55,9 @@
 
   </section>
 
-  <!-- ===== الرصيف السفلي: تنبيه السلة فوق شريط السلة ===== -->
+  <!-- ===== الرصيف السفلي: تنبيه السلة وحده =====
+       شريط السلة أُزيل، فزرّ السلة العائم يؤدّي عمله. ويبقى
+       الرصيف لأن التنبيه يحتاج موضعاً ثابتاً أسفل الشاشة. -->
   <div class="bottom-dock">
 
     <!-- يظهر عند حذف صنف من السلة لأنه لم يعد متوفراً، وهذا أفضل
@@ -54,67 +66,7 @@
       <span id="cartNoteText"></span>
       <button class="cart-note-x" type="button" id="cartNoteClose" aria-label="إغلاق التنبيه">×</button>
     </p>
-
-    <div class="cart-bar" id="cartBar" hidden>
-      <div class="cart-sum">
-        <span class="cart-count" id="cartCount">٠ أصناف</span>
-        <span class="cart-total" id="cartTotal">٠ ل.س</span>
-      </div>
-      <button class="btn" type="button" id="checkoutBtn">إتمام الطلب</button>
-    </div>
   </div>
-
-  <!-- ===== نافذة الحساب: تسجيل الدخول أو إنشاء حساب =====
-       تُفتَح من أيقونة الحساب، أو تلقائياً عند الضغط على «إتمام الطلب»
-       دون تسجيل. وتبقى السلة محفوظة خلفها. -->
-  <dialog class="co-dialog" id="authDialog" aria-labelledby="authTitle">
-    <div class="co-box">
-      <h2 class="co-title" id="authTitle">حسابك في دهب</h2>
-      <p class="auth-why" id="authWhy" hidden>
-        نحتاج إلى معرفة هويتك وعنوان التوصيل ليصلك طلبك على الوجه الصحيح.
-        لن يستغرق الأمر أكثر من دقيقة، وتبقى سلتك كما هي.
-      </p>
-
-      <div class="tabs" role="tablist">
-        <button class="tab is-on" id="tabLogin" role="tab" type="button" aria-selected="true">تسجيل الدخول</button>
-        <button class="tab" id="tabSignup" role="tab" type="button" aria-selected="false">حساب جديد</button>
-      </div>
-
-      <!-- تسجيل الدخول -->
-      <form class="gate-form" id="loginForm">
-        <label class="lbl" for="loginPhone">رقم الهاتف</label>
-        <input class="field-input" id="loginPhone" type="tel" inputmode="numeric"
-               autocomplete="tel" placeholder="09xxxxxxxx" required>
-
-        <label class="lbl" for="loginPw">كلمة المرور</label>
-        <input class="field-input" id="loginPw" type="password"
-               autocomplete="current-password" placeholder="••••••" required>
-
-        <button class="btn full" type="submit" id="loginBtn">تسجيل الدخول</button>
-      </form>
-
-      <!-- حساب جديد -->
-      <form class="gate-form" id="signupForm" hidden>
-        <label class="lbl" for="suName">الاسم</label>
-        <input class="field-input" id="suName" type="text" autocomplete="name"
-               placeholder="الاسم الكامل" maxlength="60" required>
-
-        <label class="lbl" for="suPhone">رقم الهاتف</label>
-        <input class="field-input" id="suPhone" type="tel" inputmode="numeric"
-               autocomplete="tel" placeholder="09xxxxxxxx" required>
-
-        <label class="lbl" for="suPw">كلمة المرور</label>
-        <input class="field-input" id="suPw" type="password"
-               autocomplete="new-password" placeholder="ست خانات على الأقل" required>
-
-        <button class="btn full" type="submit" id="signupBtn">إنشاء الحساب</button>
-      </form>
-
-      <p class="err-msg" id="gateErr" role="alert"></p>
-
-      <button class="btn ghost full" type="button" id="authCloseBtn">متابعة التصفّح</button>
-    </div>
-  </dialog>
 
   <!-- ===== نافذة التأكيد ===== -->
   <dialog class="co-dialog" id="checkoutDialog" aria-labelledby="coTitle">
@@ -125,11 +77,17 @@
 
       <div class="divider"><span></span><i></i><span></span></div>
 
-      <label class="lbl" for="coAddress">العنوان</label>
+      <!-- الاسم والرقم والعنوان: لا حسابات في الموقع، فتُكتب في
+           كل طلب. وبها وحدها يصل الطلب إلى صاحبه. -->
+      <label class="lbl" for="coName">الاسم</label>
+      <input class="field-input" id="coName" type="text" autocomplete="name"
+             placeholder="الاسم الكامل" maxlength="60" required>
 
-      <!-- عناوين الزبون المحفوظة، والافتراضي محدَّد سلفاً.
-           تُرسَم من order.js، وتختفي إن لم يكن له عنوان بعد. -->
-      <div class="co-addr-list" id="coAddrChoices" hidden></div>
+      <label class="lbl" for="coPhone">رقم الهاتف</label>
+      <input class="field-input" id="coPhone" type="tel" inputmode="numeric"
+             autocomplete="tel" placeholder="09xxxxxxxx" required>
+
+      <label class="lbl" for="coAddress">العنوان</label>
 
       <input class="field-input" id="coAddress" type="text" maxlength="200"
              placeholder="الحي والشارع وأقرب نقطة دالّة" required>
@@ -154,13 +112,11 @@
       <span class="done-mark" aria-hidden="true">✓</span>
       <h2 class="co-title" id="doneTitle">تسلّمنا طلبك</h2>
       <p class="done-sub">
-        سنتصل بك لتأكيد الطلب وموعد التسليم،
-        ويمكنك متابعة حالته من «طلباتي».
+        سنتصل بك على الرقم الذي كتبته لتأكيد الطلب وموعد التسليم.
       </p>
 
       <div class="co-actions">
-        <button class="btn full" type="button" id="doneTrackBtn">متابعة الطلب</button>
-        <button class="btn ghost full" type="button" id="doneBtn">حسناً</button>
+        <button class="btn full" type="button" id="doneBtn">حسناً</button>
       </div>
     </div>
   </dialog>

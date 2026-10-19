@@ -14,7 +14,12 @@
    تعمل كالمعتاد لكن دون حفظ.
    ============================================================ */
 
-const KEY = "dahab_cart";
+/* لكل نوع طلب سلّته: الدليفري والطاولة طلبان مختلفان في وقتين
+   ومكانين. فمن ملأ سلة دليفري في بيته ثم مسح رمز طاولة في
+   المطعم لا ينبغي أن يجد طلب الأمس بانتظاره على الطاولة. */
+function keyFor(scope) {
+  return "dahab_cart:" + scope;
+}
 
 /** رقم النسخة — عند تغيير شكل المحفوظ يُزاد هذا الرقم،
  *  فيُهمَل المحفوظ القديم بدل أن يتسبّب في كسر الصفحة. */
@@ -24,9 +29,9 @@ const VERSION = 1;
  *  يومين لا ينبغي أن يجد طلب الأمس في انتظاره. */
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-function drop() {
+function drop(scope) {
   try {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem(keyFor(scope));
   } catch {
     /* تعذّر الحذف — لا ضرر في ذلك */
   }
@@ -34,12 +39,12 @@ function drop() {
 
 /** تُرجع Map من معرّف الصنف إلى الكمية، وسلة فارغة إذا لم يكن
  *  هناك محفوظ، أو كان المحفوظ قديماً أو تالفاً أو التخزين مغلقاً. */
-export function loadCart() {
+export function loadCart(scope) {
   const empty = new Map();
 
   let raw;
   try {
-    raw = localStorage.getItem(KEY);
+    raw = localStorage.getItem(keyFor(scope));
   } catch {
     return empty; // تصفّح خاص أو تخزين مغلق
   }
@@ -49,18 +54,18 @@ export function loadCart() {
   try {
     data = JSON.parse(raw);
   } catch {
-    drop();
+    drop(scope);
     return empty;
   }
 
   // نسخة أخرى أو شكل غير متوقَّع — يُهمَل بدل محاولة تفسيره
   if (!data || data.v !== VERSION || typeof data.items !== "object" || !data.items) {
-    drop();
+    drop(scope);
     return empty;
   }
 
   if (!Number.isFinite(data.at) || Date.now() - data.at > MAX_AGE_MS) {
-    drop();
+    drop(scope);
     return empty;
   }
 
@@ -74,9 +79,9 @@ export function loadCart() {
 }
 
 /** يُحفَظ بعد كل تغيير، والسلة الفارغة تعني حذف المحفوظ. */
-export function saveCart(cart) {
+export function saveCart(scope, cart) {
   if (!cart.size) {
-    drop();
+    drop(scope);
     return;
   }
 
@@ -85,7 +90,7 @@ export function saveCart(cart) {
 
   try {
     localStorage.setItem(
-      KEY,
+      keyFor(scope),
       JSON.stringify({ v: VERSION, at: Date.now(), items })
     );
   } catch {

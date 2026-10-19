@@ -49,8 +49,11 @@
   max-width: 200px;
 }
 
+/* الحقلان يرثان الاتجاه من <html dir="rtl">، فيبدأ النص ونقطة
+   الإدخال من اليمين كبقية الصفحة. البريد يُكتب بحروف لاتينية،
+   وهي تُعرض بترتيبها الصحيح داخل حقل عربي الاتجاه. */
 .login-input {
-  text-align: center;
+  text-align: right;
   letter-spacing: 4px;
   margin-bottom: 16px;
 }
@@ -112,10 +115,156 @@
   align-items: center;
 }
 
+/* ============================================================
+   هيكل اللوحة: شريط جانبي وأقسام
+
+   على الهاتف الشريط صفّ تبويبات أفقي قابل للتمرير فوق المحتوى،
+   وعلى الشاشة الأوسع عمود ثابت. ولم يُستعمل درج ينفتح وينغلق:
+   أربعة أقسام تُرى كلها دفعةً واحدة أصرح من زرّ يُخفيها.
+   ============================================================ */
+
+.dash {
+  display: flex;
+  flex-direction: column;
+}
+
+.side {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+  position: sticky;
+  top: 74px;
+  z-index: 40;
+  /* شريط التمرير يقطع الصفّ بصرياً ولا يلزم: التمرير باللمس */
+  scrollbar-width: none;
+}
+
+.side::-webkit-scrollbar {
+  display: none;
+}
+
+.side-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: rgba(245, 240, 230, 0.60);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.side-item .ic {
+  width: 18px;
+  height: 18px;
+}
+
+.side-item.is-on {
+  border-color: var(--gold-deep);
+  background: var(--wash-gold);
+  color: var(--gold-light);
+}
+
+.side-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .side-item:hover {
+    color: var(--gold-light);
+  }
+}
+
+/* عدّاد الطلبات الجديدة — ينبّه الموظف وهو في قسم آخر */
+.side-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--gold);
+  color: var(--black);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .container {
   max-width: 960px;
   margin: 0 auto;
-  padding: 30px 20px 60px;
+  padding: 24px 20px 60px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.pane-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--gold-light);
+  text-shadow: var(--text-glow);
+}
+
+.pane-note {
+  margin-bottom: 18px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+@media (min-width: 860px) {
+  .dash {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .side {
+    flex-direction: column;
+    gap: 4px;
+    width: 210px;
+    flex-shrink: 0;
+    padding: 20px 12px;
+    border-bottom: none;
+    /* الصفحة RTL فالشريط على اليمين، والفاصل على حافته
+       الداخلية أي بينه وبين المحتوى */
+    border-inline-end: 1px solid var(--line-soft);
+    /* الشريط يبقى في مكانه والمحتوى وحده يمرّ، ويملأ طول الشاشة
+       فلا ينتهي لونه فجأة تحت آخر قسم */
+    position: sticky;
+    top: 74px;
+    height: calc(100vh - 74px);
+    overflow-y: auto;
+  }
+
+  .side-item {
+    border-radius: var(--r-md);
+    justify-content: flex-start;
+  }
+
+  .side-count {
+    margin-inline-start: auto;
+  }
 }
 
 /* ============================================================
@@ -420,7 +569,7 @@
   }
 
   /* حقل البحث بسطر كامل، والزرّان يتقاسمان السطر التالي */
-  .toolbar .search {
+  .toolbar .search-wrap {
     flex: 1 1 100%;
   }
 
@@ -560,8 +709,419 @@
   outline-offset: 3px;
 }
 
-/* حقلا الدخول متتاليان، والبريد يُكتب دائماً من اليسار */
+/* حقلا الدخول متتاليان، فالمسافة بينهما أضيق */
 #emailInput {
   margin-bottom: 10px;
-  text-align: left;
+}
+
+/* ============================================================
+   📥  الطلبات
+   ============================================================ */
+
+.ord-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: rgba(245, 240, 230, 0.65);
+  cursor: pointer;
+}
+
+.ord {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+/* الطلب المنتهي يبهت: يبقى للمراجعة ولا يزاحم ما ينتظر العمل */
+.ord.is-done {
+  opacity: 0.55;
+}
+
+.ord-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ord-where {
+  padding: 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(245, 240, 230, 0.75);
+}
+
+/* طلب الطاولة يُميَّز بلونه: رقمها أهمّ ما فيه */
+.ord-where.is-table {
+  border-color: var(--gold);
+  background: var(--wash-gold);
+  color: var(--gold-light);
+}
+
+.ord-when {
+  font-size: 0.82rem;
+  color: rgba(245, 240, 230, 0.50);
+}
+
+/* شارة الحالة — يأتي اللون من tone في config.js */
+.ord-state {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ord-state.is-wait { color: var(--gold); }
+.ord-state.is-ok   { color: var(--gold-light); }
+.ord-state.is-go   { color: var(--gold-light); background: var(--wash-gold); }
+.ord-state.is-done { color: var(--green); }
+.ord-state.is-bad  { color: var(--red); }
+
+.ord-who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-faint);
+  font-size: 0.88rem;
+  color: rgba(245, 240, 230, 0.70);
+}
+
+.ord-who b {
+  color: var(--cream);
+}
+
+/* الرقم قابل للنقر، فيتصل الموظف منه مباشرة */
+.ord-tel {
+  direction: ltr;
+  color: var(--gold-light);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--gold-deep);
+}
+
+.ord-addr {
+  flex-basis: 100%;
+  line-height: 1.6;
+}
+
+.ord-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ord-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.ord-line b {
+  color: var(--gold-light);
+}
+
+.ord-line span:last-child {
+  color: var(--gold-light);
+  white-space: nowrap;
+}
+
+.ord-note {
+  margin-top: 10px;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: rgba(245, 240, 230, 0.55);
+}
+
+.ord-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-faint);
+  font-size: 0.88rem;
+  color: rgba(245, 240, 230, 0.70);
+}
+
+.ord-foot strong {
+  font-size: 1.05rem;
+  color: var(--gold-light);
+}
+
+/* أزرار الحالة: كلها ظاهرة والحالية معلَّمة. فالموظف يعرف أين
+   الطلب الآن وإلى أين ينقله بنظرة واحدة، دون قائمة تُفتح. */
+.ord-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ord-set {
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: rgba(245, 240, 230, 0.55);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ord-set.is-on {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--black);
+  cursor: default;
+}
+
+.ord-set:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.ord-set:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--wash-gold);
+}
+
+@media (hover: hover) {
+  .ord-set:not(.is-on):hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+}
+
+.ord-empty,
+.ord-err {
+  padding: 26px 10px;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.ord-err {
+  color: var(--red);
+}
+
+/* ============================================================
+   🔳  رموز الطاولات
+   ============================================================ */
+
+.qr-bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.qr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: rgba(245, 240, 230, 0.60);
+}
+
+.qr-field .field-input {
+  width: 92px;
+  text-align: center;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.qr-card {
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  text-align: center;
+}
+
+/* خلفية بيضاء تحت الرمز: القارئات تتوقّع داكناً على فاتح،
+   ورمز ذهبي على أسود لا تقرؤه أكثر الهواتف */
+.qr-img {
+  background: #fff;
+  border-radius: var(--r-xs);
+  padding: 8px;
+}
+
+.qr-img svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.qr-cap {
+  margin-top: 10px;
+}
+
+.qr-cap b {
+  display: block;
+  font-size: 1rem;
+  color: var(--gold-light);
+}
+
+.qr-cap small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.64rem;
+  line-height: 1.5;
+  word-break: break-all;
+  color: rgba(245, 240, 230, 0.40);
+}
+
+/* ============================================================
+   🖨️  الطباعة — الرموز وحدها
+
+   الورقة تُقَصّ وتُلصَق على الطاولات، فلا مكان فيها لشريط جانبي
+   ولا أزرار ولا خلفية سوداء تستهلك الحبر.
+   ============================================================ */
+
+@media print {
+  .topbar,
+  .side,
+  .qr-bar,
+  .pane-head,
+  .pane-note,
+  .err-msg {
+    display: none !important;
+  }
+
+  body,
+  .qr-card {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .container {
+    padding: 0;
+    max-width: none;
+  }
+
+  .qr-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .qr-card {
+    border: 1px solid #999;
+    /* لا يُقطَع الرمز بين صفحتين */
+    break-inside: avoid;
+  }
+
+  .qr-cap b { color: #000; }
+  .qr-cap small { color: #555; }
+}
+
+/* ============================================================
+   ⏳  ريثما تُستعاد الجلسة
+   شاشة واحدة محايدة بدل أن تومض شاشة الدخول أمام موظف مسجَّل
+   ثم تختفي، فيظنّ أن اللوحة تُخرجه وتُدخله من تلقاء نفسها.
+   ============================================================ */
+
+.boot {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+/* ============================================================
+   أيقونات بدل الإيموجي
+   ============================================================ */
+
+/* الأزرار الدائرية صارت تحمل SVG لا حرفاً، فيُضبَط حجمه هنا */
+.icon-btn .ic {
+  width: 17px;
+  height: 17px;
+}
+
+.section-header .toggle .ic {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* حقل البحث: الأيقونة داخله على اليمين، والنصّ يبدأ بعدها */
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+}
+
+.search-wrap .search {
+  width: 100%;
+  padding-inline-start: 40px;
+}
+
+.search-ic {
+  position: absolute;
+  inset-inline-start: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+  color: rgba(245, 240, 230, 0.40);
+}
+
+/* ============================================================
+   🔔  شريط طلب إذن التنبيه
+   ============================================================ */
+
+.alert-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--gold-deep);
+  border-radius: var(--r-md);
+  background: var(--wash-gold);
+}
+
+.alert-bar > .ic {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.alert-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.alert-text b {
+  font-size: 0.95rem;
+  color: var(--cream);
+}
+
+.alert-text small {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: rgba(245, 240, 230, 0.60);
 }

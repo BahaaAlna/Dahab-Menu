@@ -55,7 +55,7 @@ uploadBtn.addEventListener("click", async () => {
     }
 
     log("🎉 All done! Menu is now live in Firebase.", "ok");
-    log("Next: open /index.html to see the menu, or /admin.html to manage it.", "info");
+    log("Next: open / to see the menu, or /admin to manage it.", "info");
   } catch (e) {
     log("❌ Error: " + e.message, "err");
     console.error(e);

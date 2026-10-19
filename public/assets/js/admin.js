@@ -1,6 +1,15 @@
 /* ============================================================
-   🛠️  لوحة الإدارة — إضافة/تعديل/حذف الأقسام والأصناف
-   ينعكس كل تعديل فوراً على صفحة قائمة الطعام لدى الزبائن.
+   🛠️  لوحة الإدارة
+
+   أربعة أقسام يبدّل بينها الشريط الجانبي:
+     • الطلبات       — الداخلة من الطاولات ومن الدليفري  (admin-orders.js)
+     • الأصناف       — الأقسام والأصناف والأسعار          (هذا الملف)
+     • رموز الطاولات — توليد رمز لكل طاولة وطباعته        (admin-qr.js)
+     • الإعدادات     — مفاتيح تشغيل الميزات               (هذا الملف)
+
+   التبديل في المتصفح دون تحميل صفحة: الاستماع إلى Firestore
+   قائم، فلو حُمِّلت صفحة جديدة عند كل نقرة لانقطع الاستماع
+   وأُعيد بناؤه، وضاع الطلب الواصل في تلك اللحظة.
    ============================================================ */
 
 import {
@@ -13,10 +22,40 @@ import {
   COLLECTIONS, DEFAULT_ICON, PRICE_STEP,
   PUBLIC_MENU, FEATURE_FLAGS,
 } from "./config.js";
-import { authErrorMessage } from "./auth.js";
 import { byOrder, groupBySection, escapeHtml, escapeAttr } from "./utils.js";
+import { mountOrders } from "./admin-orders.js";
+import { mountQr } from "./admin-qr.js";
 
 const $ = (id) => document.getElementById(id);
+
+/** أيقونة من ملف الرموز المشترك.
+ *  بدل الإيموجي: الإيموجي يرسمه النظام لا نحن، فيختلف شكله بين
+ *  جهاز وآخر ويأتي بألوانه فيكسر الذهبي والأسود. أما هذه فترث
+ *  لون الزرّ، وتُطبَع وتكبُر دون أن تتشوّش. */
+const icon = (id) =>
+  '<svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#' + id + '"></use></svg>';
+
+/* ============================================================
+   0. الشريط الجانبي وتبديل الأقسام
+   ============================================================ */
+
+const side = $("side");
+
+function showPane(name) {
+  for (const btn of side.querySelectorAll("[data-pane]")) {
+    btn.classList.toggle("is-on", btn.dataset.pane === name);
+  }
+  for (const pane of document.querySelectorAll(".pane")) {
+    pane.hidden = pane.id !== "pane-" + name;
+  }
+  // القسم الجديد يبدأ من أعلاه، لا من موضع تمرير القسم السابق
+  window.scrollTo(0, 0);
+}
+
+side.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-pane]");
+  if (btn) showPane(btn.dataset.pane);
+});
 
 /* ============================================================
    1. تسجيل الدخول
@@ -32,6 +71,7 @@ const $ = (id) => document.getElementById(id);
    وهو الحساب نفسه الذي وُضع UID له في isStaff() داخل
    firestore.rules. ولم يبقَ في الكود أي سرّ. */
 
+const bootEl = $("boot");
 const loginWrap = $("loginWrap");
 const adminEl = $("admin");
 const emailInput = $("emailInput");
@@ -40,39 +80,60 @@ const loginErr = $("loginErr");
 
 let panelOpen = false;
 
+/** تُطفأ شاشة الانتظار عند أول جواب من Firebase، ولا تعود */
+function endBoot() {
+  bootEl.hidden = true;
+}
+
 function openPanel() {
+  endBoot();
   if (panelOpen) return;
   panelOpen = true;
 
-  loginWrap.style.display = "none";
+  loginWrap.hidden = true;
   adminEl.classList.add("active");
   startListening();
+
+  /* الطلبات والرموز لا تُركَّب إلا بعد الدخول: قراءة الطلبات
+     للموظف وحده في القواعد، وتركيبها قبل ذلك خطأ صلاحيات مؤكَّد. */
+  mountOrders();
+  mountQr();
 }
 
 function showLogin() {
+  endBoot();
+  // لا شيء يتغيّر إن كانت شاشة الدخول ظاهرة أصلاً، فلا يُعاد رسمها
+  if (!panelOpen && !loginWrap.hidden) return;
+
   panelOpen = false;
-  loginWrap.style.display = "";
+  loginWrap.hidden = false;
   adminEl.classList.remove("active");
 }
 
 /* تُحفظ الجلسة بين الزيارات، فلا يُعاد تسجيل الدخول في كل مرة.
-   وتُضبَط قبل أي تسجيل دخول لا بعده. */
-setPersistence(auth, browserLocalPersistence).catch((e) =>
-  console.error("persistence error:", e)
-);
+   وتُضبَط قبل أي تسجيل دخول لا بعده: لذلك يُحتفَظ بالوعد
+   ويُنتظَر في tryLogin، فالضبط بعد الدخول لا يفيد شيئاً. */
+const persistenceReady = setPersistence(auth, browserLocalPersistence)
+  .catch((e) => console.error("persistence error:", e));
 
-/* رسائل auth.js مكتوبة للزبون الذي يدخل برقم هاتفه، أما الموظف
-   فيدخل ببريد، فتُصحَّح الصيغة هنا ويُترك الباقي لها. */
+/* رسائل الدخول بالعربية وبلغة مفهومة، لا أكواد Firebase.
+   كانت الرسائل العامة في auth.js، وقد أُزيل مع حسابات الزبائن،
+   فصارت هنا كاملةً: الموظف وحده من يسجّل دخولاً في الموقع. */
 const LOGIN_MESSAGES = {
   "auth/invalid-credential": "البريد أو كلمة المرور غير صحيحة.",
   "auth/invalid-login-credentials": "البريد أو كلمة المرور غير صحيحة.",
+  "auth/wrong-password": "كلمة المرور غير صحيحة.",
   "auth/user-not-found": "لا يوجد حساب موظف بهذا البريد.",
   "auth/invalid-email": "صيغة البريد غير صحيحة.",
   "auth/user-disabled": "هذا الحساب موقوف.",
+  "auth/too-many-requests": "عدد المحاولات كبير. يُرجى الانتظار قليلاً ثم إعادة المحاولة.",
+  "auth/network-request-failed": "لا يوجد اتصال بالإنترنت.",
+  "auth/operation-not-allowed":
+    "تسجيل الدخول بالبريد وكلمة المرور غير مفعّل في Firebase Console.",
 };
 
 function loginErrorMessage(err) {
-  return LOGIN_MESSAGES[err?.code] || authErrorMessage(err);
+  return LOGIN_MESSAGES[err?.code] || "حدث خطأ. يُرجى إعادة المحاولة.";
 }
 
 async function tryLogin() {
@@ -90,6 +151,7 @@ async function tryLogin() {
   btn.textContent = "يُرجى الانتظار...";
 
   try {
+    await persistenceReady;
     await signInWithEmailAndPassword(auth, email, password);
     pwInput.value = "";
     // فتح اللوحة يتولّاه onAuthStateChanged أدناه
@@ -194,10 +256,10 @@ function itemRowHtml(item) {
         <div class="item-actions">
           <button class="icon-btn toggle-avail ${off ? "off" : ""}"
                   onclick="window.__toggleAvail('${item.id}')"
-                  title="${off ? "غير متوفر" : "متوفر"}">${off ? "✗" : "✓"}</button>
+                  title="${off ? "غير متوفر" : "متوفر"}">${icon(off ? "close" : "check")}</button>
           <button class="icon-btn del"
                   onclick="window.__delItem('${item.id}','${escapeAttr(item.name)}')"
-                  title="حذف">🗑</button>
+                  title="حذف">${icon("trash")}</button>
         </div>
       </div>`;
 }
@@ -212,9 +274,9 @@ function sectionCardHtml(sec, secItems) {
           <span class="badge">${secItems.length} صنف</span>
         </div>
         <div class="section-header-actions">
-          <button class="icon-btn" onclick="event.stopPropagation();window.__editSec('${sec.id}')" title="تعديل">✎</button>
-          <button class="icon-btn del" onclick="event.stopPropagation();window.__delSec('${sec.id}')" title="حذف">🗑</button>
-          <span class="toggle">▾</span>
+          <button class="icon-btn" onclick="event.stopPropagation();window.__editSec('${sec.id}')" title="تعديل">${icon("edit")}</button>
+          <button class="icon-btn del" onclick="event.stopPropagation();window.__delSec('${sec.id}')" title="حذف">${icon("trash")}</button>
+          <span class="toggle">${icon("chevron")}</span>
         </div>
       </div>
       <div class="section-body">
@@ -273,7 +335,7 @@ window.__toggleSec = (sid) => {
 window.__updField = async (itemId, field, value) => {
   try {
     await updateDoc(doc(db, COLLECTIONS.items, itemId), { [field]: value });
-    toast("تم الحفظ ✓");
+    toast("تم الحفظ");
   } catch (e) {
     toast("تعذّر الحفظ", true);
     console.error(e);
@@ -361,7 +423,7 @@ window.__addItem = async (sectionId) => {
     });
     nameEl.value = "";
     priceEl.value = "";
-    toast("تمت الإضافة ✓");
+    toast("تمت الإضافة");
   } catch (e) {
     toast("تعذّرت الإضافة", true);
     console.error(e);
@@ -411,7 +473,7 @@ $("secSaveBtn").addEventListener("click", async () => {
           })
         );
       await batch.commit();
-      toast("تم التحديث ✓");
+      toast("تم التحديث");
     } else {
       const maxOrder = sections.reduce((m, s) => Math.max(m, s.order || 0), -1);
       await setDoc(doc(db, COLLECTIONS.sections, "sec_" + Date.now()), {
@@ -419,7 +481,7 @@ $("secSaveBtn").addEventListener("click", async () => {
         icon,
         order: maxOrder + 1,
       });
-      toast("تمت إضافة القسم ✓");
+      toast("تمت إضافة القسم");
     }
     closeModal("sectionModal");
   } catch (e) {
@@ -519,8 +581,22 @@ function toast(msg, isErr = false) {
 
 let aggTimer = null;
 
+/* وصول القائمة أول مرة ليس تعديلاً.
+   كانت اللوحة تكتب النسخة المجمّعة عند كل فتح لها، لأن أول لقطة
+   من Firestore تُنادي هذه الدالة كما يُناديها أي تعديل. والكتابة
+   الواحدة تُوقظ onSnapshot على كل جهاز زبون متّصل فيُعيد تحميل
+   القائمة، فضلاً عن أنها كتابة محسوبة من حصّة الخطة المجانية.
+   لذلك تُتجاهَل أول مرة، ولا يُكتَب إلا بعد تغيير حقيقي. */
+let firstSnapshotSettled = false;
+
 function scheduleAggregateWrite() {
   if (!sectionsReady || !itemsReady) return;
+
+  if (!firstSnapshotSettled) {
+    firstSnapshotSettled = true;
+    return;
+  }
+
   clearTimeout(aggTimer);
   aggTimer = setTimeout(writeAggregate, 1200);
 }
@@ -534,7 +610,10 @@ async function writeAggregate() {
         icon: s.icon || DEFAULT_ICON,
         order: s.order || 0,
       })),
+      // المعرّف لا غنى عنه: السلة في صفحة الطلب تُفهرَس به، ولولاه
+      // لصارت كل الأصناف صنفاً واحداً مجهولاً ومجموعها صفراً.
       items: [...items].sort(byOrder).map((i) => ({
+        id: i.id,
         sectionId: i.sectionId,
         name: i.name,
         price: i.price,
@@ -588,7 +667,7 @@ async function writeFlag(key, value, el) {
       { [key]: value, updatedAt: Date.now() },
       { merge: true }
     );
-    toast(value ? "تم تفعيل الميزة ✓" : "تم إيقاف الميزة");
+    toast(value ? "تم تفعيل الميزة" : "تم إيقاف الميزة");
   } catch (e) {
     el.checked = !value; // إعادة المفتاح إلى حالته السابقة عند تعذّر الحفظ
     toast("تعذّر حفظ الإعداد", true);

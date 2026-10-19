@@ -12,6 +12,16 @@
 
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/menu.css">
+
+  <!-- شريط العنوان بلا ‎.html‎ — الخادم يقدّم الصفحة على الحالتين، وهذا تجميل للعنوان وحده -->
+  <script>
+    try {
+      if (location.pathname.endsWith(".html")) {
+        history.replaceState(null, "",
+          location.pathname.replace(/(index)?\.html$/, "") + location.search + location.hash);
+      }
+    } catch (_) { /* file:// لا يسمح بتعديل العنوان */ }
+  </script>
 </head>
 <body>
 

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node scripts/dev-server.js",
     "dev": "node scripts/dev-server.js --open",
-    "admin": "node scripts/dev-server.js --open admin.html",
+    "admin": "node scripts/dev-server.js --open admin",
     "seed": "node scripts/dev-server.js --open tools/seed.html"
   },
   "engines": {

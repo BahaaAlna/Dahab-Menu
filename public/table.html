@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دهب | طلب من الطاولة</title>
+
+  <link rel="icon" href="assets/img/logo.png">
+  <!-- أهم ملف خط: عربي 400 — يُنزَّل مع أول طلب بدل انتظار الـ CSS -->
+  <link rel="preload" href="assets/fonts/ibm-plex-sans-arabic-arabic-400.woff2"
+        as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/menu.css">
+  <link rel="stylesheet" href="assets/css/order.css">
+
+  <!-- شريط العنوان بلا ‎.html‎ — الخادم يقدّم الصفحة على الحالتين، وهذا تجميل للعنوان وحده -->
+  <script>
+    try {
+      if (location.pathname.endsWith(".html")) {
+        history.replaceState(null, "",
+          location.pathname.replace(/(index)?\.html$/, "") + location.search + location.hash);
+      }
+    } catch (_) { /* file:// لا يسمح بتعديل العنوان */ }
+  </script>
+</head>
+<body>
+
+  <a class="back-link" href="./"><span aria-hidden="true">→</span> رجوع</a>
+
+  <!-- ===== زرّ السلة — عائم في الأعلى على اليسار =====
+       لا يظهر والسلة فارغة، فلا معنى لزرّ يفتح لا شيء. وأول صنف
+       يُضاف يُظهره حاملاً عدد الأصناف، وضغطه يفتح نافذة التأكيد. -->
+  <button class="cart-btn" type="button" id="cartBtn" hidden
+          aria-label="سلة الطلب" aria-haspopup="dialog">
+    <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#bag"></use></svg>
+    <span class="cart-badge" id="cartBadge">٠</span>
+  </button>
+
+  <!-- ===== لا رقم طاولة في العنوان =====
+       يُفتح هذا بدل القائمة. فطلب بلا رقم طاولة لا يعرف المطبخ
+       أين يحمله، ولا يُقبَل أصلاً في قواعد Firestore. -->
+  <section class="table-gate" id="tableGate" hidden>
+    <div class="frame gate-box">
+      <span class="corner sm tl"></span><span class="corner sm tr"></span>
+      <span class="corner sm bl"></span><span class="corner sm br"></span>
+
+      <div class="gate-ic"><svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#scan"></use></svg></div>
+      <h1 class="gate-title">امسح رمز طاولتك</h1>
+      <p class="gate-text">
+        لم نعرف رقم طاولتك. افتح كاميرا هاتفك ووجّهها نحو الرمز
+        الموجود على الطاولة، فتُفتَح القائمة ويصل طلبك إلى المطبخ
+        منسوباً إليها.
+      </p>
+      <a class="btn full" href="./">العودة إلى الصفحة الرئيسية</a>
+    </div>
+  </section>
+
+  <!-- ===== الطلب ===== -->
+  <section class="order" id="orderApp" hidden>
+
+    <!-- ترحيب يحمل رقم الطاولة: الزبون يطمئنّ إلى أن الطلب
+         سيصل إلى طاولته هو، ويكتشف الخطأ قبل أن يطلب لا بعده -->
+    <p class="table-banner" id="tableBanner">
+      <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#table"></use></svg>
+      <span>أهلاً بك — رقم طاولتك <b id="tableNum">٠</b></span>
+    </p>
+
+    <header class="order-intro">
+      <h1 class="order-title">طلب من الطاولة</h1>
+      <p class="order-sub">اختر ما تريده ونحضره إلى طاولتك</p>
+    </header>
+
+    <main class="order-menu" id="orderMenu">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top:20px;">جارٍ تحميل القائمة...</p>
+      </div>
+    </main>
+
+  </section>
+
+  <!-- ===== الرصيف السفلي: تنبيه السلة وحده ===== -->
+  <div class="bottom-dock">
+
+    <!-- يظهر عند حذف صنف من السلة لأنه لم يعد متوفراً، وهذا أفضل
+         من أن يتغيّر المجموع تلقائياً دون أن يعرف الزبون السبب -->
+    <p class="cart-note" id="cartNote" hidden>
+      <span id="cartNoteText"></span>
+      <button class="cart-note-x" type="button" id="cartNoteClose" aria-label="إغلاق التنبيه">×</button>
+    </p>
+  </div>
+
+  <!-- ===== نافذة التأكيد =====
+       لا رقم هاتف ولا عنوان: الطلب لا يُوصَّل ولا يُتَّصل بصاحبه،
+       بل يُحمَل إلى طاولته. والاسم اختياري يعين النادل حين تطلب
+       الطاولة الواحدة أكثر من طلب. -->
+  <dialog class="co-dialog" id="checkoutDialog" aria-labelledby="coTitle">
+    <form method="dialog" class="co-box" id="checkoutForm">
+      <h2 class="co-title" id="coTitle">تأكيد الطلب</h2>
+
+      <p class="co-table" id="coTable">إلى الطاولة رقم <b id="coTableNum">٠</b></p>
+
+      <div class="co-lines" id="coLines"></div>
+
+      <div class="divider"><span></span><i></i><span></span></div>
+
+      <label class="lbl" for="coName">الاسم <small>(اختياري)</small></label>
+      <input class="field-input" id="coName" type="text" autocomplete="name"
+             placeholder="ليعرف النادل لمن الطلب" maxlength="60">
+
+      <label class="lbl" for="coNote">ملاحظات <small>(اختياري)</small></label>
+      <input class="field-input" id="coNote" type="text" maxlength="300"
+             placeholder="مثال: بدون بصل، الصحن مشترك">
+
+      <p class="co-total">المجموع: <strong id="coTotal">٠</strong> ل.س</p>
+      <p class="err-msg" id="coErr" role="alert"></p>
+
+      <div class="co-actions">
+        <button class="btn full" type="button" id="confirmBtn">تأكيد وإرسال</button>
+        <button class="btn ghost full" type="button" id="cancelBtn">رجوع</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===== تم الإرسال ===== -->
+  <dialog class="co-dialog" id="doneDialog" aria-labelledby="doneTitle">
+    <div class="co-box done-box">
+      <span class="done-mark" aria-hidden="true">✓</span>
+      <h2 class="co-title" id="doneTitle">تسلّمنا طلبك</h2>
+      <p class="done-sub" id="doneSub">
+        طلبك في طريقه إلى المطبخ، وسيصل إلى طاولتك قريباً.
+      </p>
+
+      <div class="co-actions">
+        <button class="btn full" type="button" id="doneBtn">حسناً</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="assets/js/table.js"></script>
+</body>
+</html>
