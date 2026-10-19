@@ -37,6 +37,14 @@ jobs:
           cp -r public/. _site/
           rm -rf _site/tools
           touch _site/.nojekyll
+
+      # يختم روابط الأنماط والسكربتات برقم النسخة، فلا يبقى الهاتف على
+      # نسخة قديمة مخزَّنة بعد النشر (Pages يُخزّن الملف 10 دقائق)
+      - name: Stamp asset URLs with the commit
+        run: bash scripts/stamp-assets.sh _site "$GITHUB_SHA"
+
+      - name: List published files
+        run: |
           echo "--- محتوى الموقع المنشور ---"
           find _site -type f | sort
 
