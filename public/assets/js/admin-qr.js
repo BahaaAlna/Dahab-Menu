@@ -1,11 +1,15 @@
 /* ============================================================
-   🔳  رموز الطاولات
+     رموز الطاولات
 
-   لكل طاولة رمز يحمل رابطها:  …/table?t=3
+   لكل طاولة رمز يحمل رابطها ومفتاحها:  …/table?t=3&k=KEY
    يُطبَع ويُلصَق عليها، فيفتح للزبون صفحة الطلب ويُعرِّف المطبخ
    برقم طاولته دون أن يكتبه أحد بيده.
 
-   الرموز تُولَّد في المتصفح لا على خادم: لا رحلة شبكة، ولا خدمة
+   المفتاح محفوظ في Firestore (مجموعة tables) وتتحقّق منه قواعد
+   الحماية عند كل طلب. فإعادة التوليد تُبدّله، ويتعطّل الرمز
+   المطبوع القديم فوراً. وتُعرَض الرموز المولَّدة كلها في قائمة.
+
+   الرموز تُرسَم في المتصفح لا على خادم: لا رحلة شبكة، ولا خدمة
    خارجية تتعطّل يوماً فتتعطّل معها طاولات المطعم. والمكتبة
    المستعملة (qrcode-generator) بلا اعتماديات وتُخرج SVG، وهو
    ما يُطبَع بأي حجم دون أن يتشوّش.
@@ -15,7 +19,10 @@
    المنشور يشير إليه. فلا يُطبَع رمز يحمل localhost.
    ============================================================ */
 
-import { escapeHtml } from "./utils.js";
+import {
+  db, collection, doc, setDoc, updateDoc,
+  query, orderBy, onSnapshot, serverTimestamp,
+} from "./firebase.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -37,81 +44,232 @@ function arabicNum(n) {
   return String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
 }
 
+/** مفتاح عشوائي من 20 خانة. crypto لا Math.random: المفتاح سرّ
+ *  يحمي الطاولة، فلا يُتوقَّع. */
+function newToken() {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(20));
+  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
+}
+
 /** رابط الطاولة بأصل الموقع الحالي */
-function tableUrl(n) {
-  return new URL("table?t=" + n, location.href).href;
+function tableUrl(n, token) {
+  return new URL("table?t=" + n + "&k=" + token, location.href).href;
 }
 
 export function mountQr() {
-  const grid = $("qrGrid");
   const errEl = $("qrErr");
-  const fromEl = $("qrFrom");
-  const toEl = $("qrTo");
+  const grid = $("qrGrid");
+  const dlg = $("qrDialog");
+  // خارج .container: طباعة الرمز وحده تُخفي الحاوية كلها
+  document.body.appendChild(dlg);
 
-  async function generate() {
-    errEl.textContent = "";
+  let records = [];   // [{ n, token }] مرتّبة برقم الطاولة
+  let current = null; // { n, url, svg }
 
-    const from = Number(fromEl.value);
-    const to = Number(toEl.value);
+  async function makeSvg(url, cellSize) {
+    const qrcode = await loadQrcode();
+    // المستوى M يحتمل تلف ربع الرمز تقريباً، وهو المناسب لرمز
+    // يعيش على طاولة مطعم: تصيبه البقع ويُخدَش
+    const qr = qrcode(0, "M");
+    qr.addData(url);
+    qr.make();
+    return qr.createSvgTag({ cellSize, margin: 2, scalable: true });
+  }
 
-    if (!Number.isInteger(from) || !Number.isInteger(to)) {
-      errEl.textContent = "يُرجى كتابة رقمين صحيحين.";
+  /* ---------- قائمة الرموز ---------- */
+
+  async function drawGrid() {
+    if (!records.length) {
+      grid.innerHTML =
+        '<p class="pane-note">لم يُولَّد أي رمز بعد. اكتب رقم طاولة واضغط «توليد الرمز».</p>';
       return;
     }
-    if (from < 1 || to > MAX_TABLE) {
-      errEl.textContent = "أرقام الطاولات بين ١ و " + arabicNum(MAX_TABLE) + ".";
-      return;
-    }
-    if (to < from) {
-      errEl.textContent = "رقم البداية أكبر من رقم النهاية.";
-      return;
-    }
 
-    grid.innerHTML = '<p class="pane-note">جارٍ التوليد...</p>';
-
-    let qrcode;
+    let cards;
     try {
-      qrcode = await loadQrcode();
+      cards = await Promise.all(records.map(async (r) => {
+        const svg = await makeSvg(tableUrl(r.n, r.token), 4);
+        return '<figure class="qr-card" data-n="' + r.n + '" tabindex="0" role="button" ' +
+            'aria-label="عرض رمز الطاولة ' + r.n + '">' +
+          '<div class="qr-img">' + svg + "</div>" +
+          '<figcaption class="qr-cap"><b>طاولة ' + arabicNum(r.n) + "</b></figcaption>" +
+          '<button class="btn ghost small qr-regen" type="button" data-regen="' + r.n + '">' +
+            "إعادة توليد</button>" +
+        "</figure>";
+      }));
     } catch (err) {
       console.error("qr library error:", err);
       errEl.textContent = "تعذّر تحميل مولّد الرموز. يُرجى التحقق من الاتصال بالإنترنت.";
-      grid.innerHTML = "";
       return;
     }
-
-    const cards = [];
-    for (let n = from; n <= to; n++) {
-      const url = tableUrl(n);
-
-      // المستوى M يحتمل تلف ربع الرمز تقريباً، وهو المناسب لرمز
-      // يعيش على طاولة مطعم: تصيبه البقع ويُخدَش
-      const qr = qrcode(0, "M");
-      qr.addData(url);
-      qr.make();
-
-      cards.push(
-        '<figure class="qr-card">' +
-          '<div class="qr-img">' + qr.createSvgTag({ cellSize: 4, margin: 1, scalable: true }) + "</div>" +
-          '<figcaption class="qr-cap">' +
-            "<b>طاولة " + arabicNum(n) + "</b>" +
-            '<small dir="ltr">' + escapeHtml(url) + "</small>" +
-          "</figcaption>" +
-        "</figure>"
-      );
-    }
-
     grid.innerHTML = cards.join("");
   }
 
-  $("qrMakeBtn").addEventListener("click", generate);
+  onSnapshot(
+    query(collection(db, "tables"), orderBy("n")),
+    (snap) => {
+      records = snap.docs.map((d) => ({ n: d.data().n, token: d.data().token }));
+      drawGrid();
+      // نافذة مفتوحة على رمز أُعيد توليده: تُحدَّث لتعرض الجديد
+      if (dlg.open && current) {
+        const r = records.find((x) => x.n === current.n);
+        if (r) showOne(r.n); else dlg.close();
+      }
+    },
+    (err) => {
+      console.error("tables error:", err);
+      errEl.textContent =
+        "تعذّر تحميل الرموز. تأكّد من نشر قواعد Firestore ومن أن حسابك مذكور في isStaff().";
+    }
+  );
 
-  /* الطباعة تطبع الرموز وحدها: ورقة فيها شريط جانبي وأزرار لا
-     تصلح للصق على طاولة. التفاصيل في admin.css تحت @media print. */
-  $("qrPrintBtn").addEventListener("click", () => {
-    if (!grid.children.length) {
-      errEl.textContent = "لا توجد رموز للطباعة. اضغط «توليد» أولاً.";
+  /* ---------- توليد ---------- */
+
+  async function generate() {
+    errEl.textContent = "";
+    const n = Number($("qrOne").value);
+
+    if (!Number.isInteger(n) || n < 1 || n > MAX_TABLE) {
+      errEl.textContent = "أرقام الطاولات بين ١ و " + arabicNum(MAX_TABLE) + ".";
       return;
     }
+    if (records.some((r) => r.n === n)) {
+      errEl.textContent =
+        "للطاولة " + arabicNum(n) + " رمز مولَّد مسبقاً. استعمل «إعادة توليد» على بطاقتها.";
+      return;
+    }
+
+    const btn = $("qrOneBtn");
+    btn.disabled = true;
+    try {
+      await setDoc(doc(db, "tables", String(n)), {
+        n, token: newToken(), createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("generate error:", err);
+      errEl.textContent = "تعذّر توليد الرمز. يُرجى إعادة المحاولة.";
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /** إعادة التوليد تُعطّل الرمز المطبوع، فتُسأل مرتين */
+  async function regenerate(n) {
+    errEl.textContent = "";
+
+    if (!confirm("إعادة توليد رمز الطاولة " + arabicNum(n) +
+        "؟\nسيتوقف الرمز القديم عن العمل نهائياً.")) return;
+    if (!confirm("تأكيد أخير: كل رمز مطبوع لهذه الطاولة سيتعطّل، ولن يستطيع الزبائن " +
+        "الطلب به حتى تطبع الرمز الجديد وتلصقه.\n\nهل أنت متأكد؟")) return;
+
+    try {
+      await updateDoc(doc(db, "tables", String(n)), {
+        token: newToken(), regeneratedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("regenerate error:", err);
+      errEl.textContent = "تعذّر إعادة التوليد. يُرجى إعادة المحاولة.";
+    }
+  }
+
+  $("qrOneBtn").addEventListener("click", generate);
+  $("qrOne").addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); });
+
+  /* ---------- عرض رمز كبير ---------- */
+
+  async function showOne(n) {
+    const r = records.find((x) => x.n === n);
+    if (!r) return;
+
+    const url = tableUrl(r.n, r.token);
+    let svg;
+    try {
+      svg = await makeSvg(url, 8);
+    } catch (err) {
+      console.error("qr library error:", err);
+      errEl.textContent = "تعذّر تحميل مولّد الرموز. يُرجى التحقق من الاتصال بالإنترنت.";
+      return;
+    }
+
+    current = { n, url, svg };
+    $("qrBigTitle").textContent = "طاولة " + arabicNum(n);
+    $("qrBigImg").innerHTML = svg;
+    $("qrBigUrl").textContent = url;
+    $("qrBigUrl").href = url;
+    if (!dlg.open) dlg.showModal();
+  }
+
+  grid.addEventListener("click", (e) => {
+    const regen = e.target.closest("[data-regen]");
+    if (regen) {
+      regenerate(Number(regen.dataset.regen));
+      return;
+    }
+    const card = e.target.closest(".qr-card");
+    if (card) showOne(Number(card.dataset.n));
+  });
+
+  grid.addEventListener("keydown", (e) => {
+    if (e.target.closest("[data-regen]")) return;
+    if (e.key === "Enter" || e.key === " ") {
+      const card = e.target.closest(".qr-card");
+      if (card) {
+        e.preventDefault();
+        showOne(Number(card.dataset.n));
+      }
+    }
+  });
+
+  /* التنقّل بين الطاولات المولَّدة من داخل النافذة */
+  function step(dir) {
+    if (!current) return;
+    const i = records.findIndex((r) => r.n === current.n);
+    const next = records[i + dir];
+    if (next) showOne(next.n);
+  }
+  $("qrPrev").addEventListener("click", () => step(-1));
+  $("qrNext").addEventListener("click", () => step(1));
+  $("qrRegen").addEventListener("click", () => current && regenerate(current.n));
+  $("qrClose").addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+
+  function save(blob, name) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  $("qrSaveSvg").addEventListener("click", () => {
+    if (!current) return;
+    save(new Blob([current.svg], { type: "image/svg+xml" }), "table-" + current.n + ".svg");
+  });
+
+  /* PNG: يُرسَم الـ SVG على لوحة بيضاء بحجم كبير يصلح للطباعة */
+  $("qrSavePng").addEventListener("click", () => {
+    if (!current) return;
+    const { n, svg } = current;
+    const img = new Image();
+    img.onload = () => {
+      const size = 1024;
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0, size, size);
+      c.toBlob((b) => b && save(b, "table-" + n + ".png"), "image/png");
+    };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
+
+  $("qrPrintOne").addEventListener("click", () => {
+    document.body.classList.add("print-one");
+    window.addEventListener("afterprint",
+      () => document.body.classList.remove("print-one"), { once: true });
     window.print();
   });
 }

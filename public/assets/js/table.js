@@ -1,5 +1,5 @@
 /* ============================================================
-   🍽️  صفحة الطلب من الطاولة
+     صفحة الطلب من الطاولة
 
    الزبون في المطعم يمسح الرمز الملصَق على طاولته، فيفتح الرابط:
 
@@ -33,7 +33,14 @@ function readTableNumber() {
   return n >= 1 && n <= MAX_TABLE ? n : null;
 }
 
+/** مفتاح الرمز من ‎?k=‎ — يتبدّل كلما أُعيد توليد الرمز، فيعطّل القديم */
+function readTableKey() {
+  const raw = new URLSearchParams(location.search).get("k");
+  return /^[A-Za-z0-9]{8,64}$/.test(String(raw || "")) ? raw : null;
+}
+
 const table = readTableNumber();
+const tableKey = readTableKey();
 
 if (table === null) {
   // لا رقم طاولة: تُعرَض شاشة «امسح رمز طاولتك» ولا تُحمَّل القائمة
@@ -52,6 +59,8 @@ if (table === null) {
       const order = { type: "table", table, items, total };
       // الاسم اختياري، فلا تُرسَل خانة فارغة إلى قاعدة البيانات
       if (name) order.customer = { name };
+      // بلا مفتاح لا تُرسَل الخانة: طاولة بلا رمز مولَّد لا تطلبه القواعد
+      if (tableKey) order.tableKey = tableKey;
 
       return { order };
     },

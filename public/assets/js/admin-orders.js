@@ -1,5 +1,5 @@
 /* ============================================================
-   📥  الطلبات في لوحة الإدارة
+     الطلبات في لوحة الإدارة
 
    الطلبان الداخلي والخارجي يصلان إلى المجموعة نفسها، ويُميَّزان
    بخانة type: «طاولة» تحمل رقمها، و«دليفري» يحمل اسم الزبون
@@ -14,7 +14,7 @@
    ============================================================ */
 
 import {
-  db, collection, doc, updateDoc,
+  db, collection, doc, updateDoc, deleteDoc,
   query, orderBy, limit, onSnapshot,
 } from "./firebase.js";
 import { CURRENCY, ORDER_STATUS } from "./config.js";
@@ -29,6 +29,43 @@ const SHOWN = 60;
 
 /** الحالات التي يُعدّ الطلب عندها منتهياً */
 const DONE_STATES = ["delivered", "cancelled"];
+
+/** مسار الطلب. الطاولة تُحمَل ولا تُوصَّل، فلا «في الطريق» لها */
+const FLOW = {
+  delivery: ["new", "confirmed", "preparing", "on_way", "delivered"],
+  table:    ["new", "confirmed", "preparing", "delivered"],
+};
+
+/** نص الزرّ الذي ينقل الطلب إلى الحالة التالية */
+const NEXT_LABEL = {
+  confirmed: "تأكيد الطلب",
+  preparing: "بدء التحضير",
+  on_way:    "خرج للتوصيل",
+  delivered: { delivery: "تم التسليم", table: "تم التقديم" },
+};
+
+/** طلب جديد لم يُلمَس منذ هذه المدة يُعلَّم متأخراً (بالدقائق) */
+const LATE_AFTER = 5;
+
+function nextOf(o) {
+  if (DONE_STATES.includes(o.status)) return null;
+  const flow = FLOW[o.type] || FLOW.delivery;
+  const i = flow.indexOf(o.status);
+  return i >= 0 && i < flow.length - 1 ? flow[i + 1] : null;
+}
+
+function nextLabel(o, key) {
+  const l = NEXT_LABEL[key];
+  return typeof l === "object" ? l[o.type] || l.delivery : l;
+}
+
+/** منذ كم الطلب؟ يُحدَّث دورياً دون إعادة رسم القائمة */
+function sinceText(ms) {
+  const min = Math.floor((Date.now() - ms) / 60000);
+  if (min < 1) return "الآن";
+  if (min < 60) return "منذ " + arabicNum(min) + " د";
+  return "منذ " + arabicNum(Math.floor(min / 60)) + " س";
+}
 
 /** أرقام عربية — كما في صفحات الزبون */
 function arabicNum(n) {
@@ -61,10 +98,16 @@ function headHtml(o) {
     : '<span class="ord-where">دليفري</span>';
 
   const st = statusOf(o.status);
+  const ms = o.createdAt?.toMillis?.();
+  const since = ms && !DONE_STATES.includes(o.status)
+    ? '<span class="ord-since" data-ts="' + ms + '" data-st="' + o.status + '">' +
+        escapeHtml(sinceText(ms)) + "</span>"
+    : "";
 
   return '<div class="ord-head">' +
     where +
     '<span class="ord-when">' + escapeHtml(whenText(o.createdAt)) + "</span>" +
+    since +
     '<span class="ord-state is-' + st.tone + '">' + escapeHtml(st.label) + "</span>" +
   "</div>";
 }
@@ -98,14 +141,36 @@ function linesHtml(o) {
   ).join("") + "</div>";
 }
 
-/** أزرار الحالة — الحالة الحالية معلَّمة، وضغط غيرها ينقل إليها */
+/** الإجراء الأهم زرّ واحد كبير: نقل الطلب إلى خطوته التالية. أما
+ *  بقية الحالات فتُطوى تحت «كل الحالات» لمن أخطأ أو يريد القفز. */
 function statesHtml(o) {
-  return '<div class="ord-acts">' + Object.entries(ORDER_STATUS).map(([key, s]) =>
+  const next = nextOf(o);
+  const done = DONE_STATES.includes(o.status);
+
+  const main = next
+    ? '<button class="btn ord-next" type="button" data-set="' + next + '" data-order="' +
+        escapeHtml(o.id) + '">' + escapeHtml(nextLabel(o, next)) + "</button>"
+    : "";
+
+  const cancel = done ? "" :
+    '<button class="btn ghost small ord-cancel" type="button" data-set="cancelled" data-order="' +
+      escapeHtml(o.id) + '" data-confirm="إلغاء هذا الطلب؟">إلغاء</button>';
+
+  // الحذف متاح لكل طلب مهما كانت حالته، ويُسأل عنه قبل التنفيذ
+  const del =
+    '<button class="btn ghost small ord-del" type="button" data-del="' +
+      escapeHtml(o.id) + '">حذف</button>';
+
+  const all = Object.entries(ORDER_STATUS).map(([key, s]) =>
     '<button class="ord-set' + (key === o.status ? " is-on" : "") + '" type="button" ' +
       'data-set="' + key + '" data-order="' + escapeHtml(o.id) + '">' +
       escapeHtml(s.label) +
     "</button>"
-  ).join("") + "</div>";
+  ).join("");
+
+  return '<div class="ord-main">' + main + cancel + del + "</div>" +
+    '<details class="ord-more"><summary>كل الحالات</summary>' +
+    '<div class="ord-acts">' + all + "</div></details>";
 }
 
 function orderHtml(o) {
@@ -113,7 +178,8 @@ function orderHtml(o) {
     ? '<p class="ord-note">ملاحظة: ' + escapeHtml(o.note) + "</p>"
     : "";
 
-  return '<article class="ord' + (DONE_STATES.includes(o.status) ? " is-done" : "") + '">' +
+  return '<article class="ord' + (DONE_STATES.includes(o.status) ? " is-done" : "") +
+    (o.status === "new" ? " is-new" : "") + '">' +
     headHtml(o) +
     whoHtml(o) +
     linesHtml(o) +
@@ -135,6 +201,19 @@ export function mountOrders() {
   const announce = mountAlerts();
 
   let all = [];
+  let typeFilter = "all";
+  const tabs = $("ordTabs");
+
+  /** يُحدَّث نص «منذ كذا» وتُعلَّم الطلبات الجديدة المتأخرة */
+  function tick() {
+    document.querySelectorAll(".ord-since").forEach((el) => {
+      const ms = Number(el.dataset.ts);
+      el.textContent = sinceText(ms);
+      el.classList.toggle("is-late",
+        el.dataset.st === "new" && Date.now() - ms > LATE_AFTER * 60000);
+    });
+  }
+  setInterval(tick, 30000);
 
   /** معرّفات ما رأيناه، كي لا يُنبَّه على طلب قديم.
    *  أول لقطة تملأ المجموعة بلا تنبيه: اللوحة تُفتح على طلبات
@@ -143,9 +222,23 @@ export function mountOrders() {
   let firstSnapshot = true;
 
   function draw() {
-    const shown = hideDone.checked
-      ? all.filter((o) => !DONE_STATES.includes(o.status))
-      : all;
+    // المنتهي يُؤخَّر إلى آخر القائمة مع بقاء ترتيب الوقت داخل كل مجموعة
+    const byType = typeFilter === "all" ? all : all.filter((o) => o.type === typeFilter);
+    const live = byType.filter((o) => !DONE_STATES.includes(o.status));
+    const ended = byType.filter((o) => DONE_STATES.includes(o.status));
+    const shown = hideDone.checked ? live : [...live, ...ended];
+
+    // عدّاد كل تبويب = الطلبات الجارية منه
+    const liveAll = all.filter((o) => !DONE_STATES.includes(o.status));
+    const counts = {
+      all: liveAll.length,
+      delivery: liveAll.filter((o) => o.type === "delivery").length,
+      table: liveAll.filter((o) => o.type === "table").length,
+    };
+    tabs.querySelectorAll("[data-ftype]").forEach((b) => {
+      b.classList.toggle("is-on", b.dataset.ftype === typeFilter);
+      b.querySelector("i").textContent = arabicNum(counts[b.dataset.ftype]);
+    });
 
     listEl.innerHTML = shown.length
       ? shown.map(orderHtml).join("")
@@ -156,15 +249,41 @@ export function mountOrders() {
     const fresh = all.filter((o) => o.status === "new").length;
     navCount.hidden = fresh === 0;
     navCount.textContent = arabicNum(fresh);
+
+    tick();
   }
+
+  tabs.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ftype]");
+    if (!b) return;
+    typeFilter = b.dataset.ftype;
+    draw();
+  });
 
   hideDone.addEventListener("change", draw);
 
   /* تغيير الحالة. الكتابة تُترك لـ Firestore ليُعيدها إلينا عبر
      onSnapshot، فلا يُرسَم شيء مرّتين ولا تظهر حالة لم تُحفَظ. */
   listEl.addEventListener("click", async (e) => {
+    /* الحذف نهائي ولا رجعة فيه، فلا يتم قبل تأكيد صريح */
+    const delBtn = e.target.closest("[data-del]");
+    if (delBtn) {
+      if (!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟\nلا يمكن التراجع عن الحذف.")) return;
+
+      delBtn.disabled = true;
+      try {
+        await deleteDoc(doc(db, "orders", delBtn.dataset.del));
+      } catch (err) {
+        console.error("order delete error:", err);
+        alert("تعذّر حذف الطلب. يُرجى إعادة المحاولة.");
+        delBtn.disabled = false;
+      }
+      return;
+    }
+
     const btn = e.target.closest("[data-set]");
     if (!btn || btn.classList.contains("is-on")) return;
+    if (btn.dataset.confirm && !confirm(btn.dataset.confirm)) return;
 
     btn.disabled = true;
     try {

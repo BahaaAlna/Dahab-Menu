@@ -1,5 +1,5 @@
 /* ============================================================
-   🌱  رفع بيانات قائمة الطعام الأولية إلى Firestore — يُستخدم مرة واحدة
+     رفع بيانات قائمة الطعام الأولية إلى Firestore — يُستخدم مرة واحدة
    ============================================================ */
 
 import {
@@ -30,7 +30,7 @@ function log(msg, cls = "") {
 
 uploadBtn.addEventListener("click", async () => {
   uploadBtn.disabled = true;
-  log("🚀 Starting upload...", "info");
+  log(" Starting upload...", "info");
 
   try {
     // 1. الأقسام
@@ -40,7 +40,7 @@ uploadBtn.addEventListener("click", async () => {
       secBatch.set(doc(db, COLLECTIONS.sections, sec.id), sec);
     }
     await secBatch.commit();
-    log(`✓ ${SECTIONS.length} sections uploaded`, "ok");
+    log(` ${SECTIONS.length} sections uploaded`, "ok");
 
     // 2. الأصناف (على دفعات)
     log(`Uploading ${ITEMS.length} items...`, "info");
@@ -51,13 +51,13 @@ uploadBtn.addEventListener("click", async () => {
         batch.set(doc(db, COLLECTIONS.items, id), item);
       });
       await batch.commit();
-      log(`✓ Batch uploaded (${Math.min(i + BATCH_SIZE, ITEMS.length)}/${ITEMS.length})`, "ok");
+      log(` Batch uploaded (${Math.min(i + BATCH_SIZE, ITEMS.length)}/${ITEMS.length})`, "ok");
     }
 
-    log("🎉 All done! Menu is now live in Firebase.", "ok");
+    log(" All done! Menu is now live in Firebase.", "ok");
     log("Next: open / to see the menu, or /admin to manage it.", "info");
   } catch (e) {
-    log("❌ Error: " + e.message, "err");
+    log(" Error: " + e.message, "err");
     console.error(e);
   }
 
@@ -70,7 +70,7 @@ clearBtn.addEventListener("click", async () => {
   if (!confirm("هل أنت متأكد؟ سيتم حذف جميع بيانات قائمة الطعام من Firebase.")) return;
 
   clearBtn.disabled = true;
-  log("🗑️ Clearing all data...", "info");
+  log(" Clearing all data...", "info");
 
   try {
     for (const name of [COLLECTIONS.sections, COLLECTIONS.items]) {
@@ -78,11 +78,11 @@ clearBtn.addEventListener("click", async () => {
       const batch = writeBatch(db);
       snap.forEach((d) => batch.delete(d.ref));
       await batch.commit();
-      log(`✓ Cleared ${snap.size} docs from ${name}`, "ok");
+      log(` Cleared ${snap.size} docs from ${name}`, "ok");
     }
-    log("✅ All data cleared.", "ok");
+    log(" All data cleared.", "ok");
   } catch (e) {
-    log("❌ " + e.message, "err");
+    log(" " + e.message, "err");
   }
 
   clearBtn.disabled = false;

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================
-   🖥️  خادم التطوير المحلي — بدون أي مكتبات خارجية
+     خادم التطوير المحلي — بدون أي مكتبات خارجية
    يقدّم محتويات مجلد public/ ويطبع رابط قائمة الطعام ورابط لوحة الإدارة.
 
    التشغيل:   npm start
@@ -92,11 +92,11 @@ let attempts = 0;
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE" && attempts < MAX_PORT_TRIES) {
     attempts++;
-    console.log(`  ⚠️  المنفذ ${START_PORT + attempts - 1} مشغول، ستتم تجربة المنفذ ${START_PORT + attempts}...`);
+    console.log(`    المنفذ ${START_PORT + attempts - 1} مشغول، ستتم تجربة المنفذ ${START_PORT + attempts}...`);
     server.listen(START_PORT + attempts);
     return;
   }
-  console.error("  ❌ " + err.message);
+  console.error("   " + err.message);
   process.exit(1);
 });
 
@@ -109,12 +109,12 @@ server.listen(START_PORT, () => {
   ║            دهب — شاورما و جريل                ║
   ╚══════════════════════════════════════════════╝
 
-    👋  صفحة الترحيب  ${base}/
-    🍽️  قائمة الطعام   ${base}/menu
-    🛵  طلب دليفري     ${base}/order
-    🪑  طلب من الطاولة ${base}/table?t=3
-    🛠️  لوحة الإدارة   ${base}/admin
-    🌱  رفع البيانات   ${base}/tools/seed.html
+      صفحة الترحيب  ${base}/
+      قائمة الطعام   ${base}/menu
+      طلب دليفري     ${base}/order
+      طلب من الطاولة ${base}/table?t=3
+      لوحة الإدارة   ${base}/admin
+      رفع البيانات   ${base}/tools/seed.html
 
     للإيقاف: Ctrl + C
 `);

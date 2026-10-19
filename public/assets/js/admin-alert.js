@@ -1,5 +1,5 @@
 /* ============================================================
-   🔔  تنبيه الطلب الجديد
+     تنبيه الطلب الجديد
 
    اللوحة تبقى مفتوحة على شاشة في المطعم، ولا أحد يقف أمامها
    يراقبها. فالطلب الذي يصل ولا يُسمَع لا يُحضَّر.
@@ -41,30 +41,57 @@ function primeAudio() {
   }
 }
 
-/** نغمتان صاعدتان قصيرتان — تُسمَع في ضجيج المطعم ولا تُزعج */
+/** جرس لطيف: ثلاث نغمات صاعدة (دو ـ مي ـ صول) بجرس ناعم يتلاشى،
+ *  وصدى خفيف يملأ المكان. كل نغمة أساس صافٍ مع جزئيّتين أعلى منه
+ *  تُعطيان رنّة المعدن بدل صفير الموجة الجيبية المجرَّدة. */
 function beep() {
   if (!audioCtx) return;
   // قد يكون معلَّقاً إن عاد التبويب من الخلفية
   if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
 
-  const now = audioCtx.currentTime;
-  for (const [i, freq] of [880, 1320].entries()) {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+  const ctx = audioCtx;
+  const now = ctx.currentTime + 0.02;
 
-    osc.type = "sine";
-    osc.frequency.value = freq;
+  // مجمّع المخرجات: صوت مباشر + صدى (تأخير مع تغذية راجعة مخفَّفة)
+  const master = ctx.createGain();
+  master.gain.value = 0.5;
+  master.connect(ctx.destination);
 
-    const at = now + i * 0.18;
-    // الصعود والهبوط يمنعان الطقطقة التي تُحدثها البداية الحادّة
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(0.25, at + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+  const echo = ctx.createDelay();
+  echo.delayTime.value = 0.22;
+  const fb = ctx.createGain();
+  fb.gain.value = 0.3;
+  const wet = ctx.createGain();
+  wet.gain.value = 0.35;
+  master.connect(echo);
+  echo.connect(fb).connect(echo);
+  echo.connect(wet).connect(ctx.destination);
 
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(at);
-    osc.stop(at + 0.18);
-  }
+  // دو٦ ـ مي٦ ـ صول٦
+  const notes = [1046.5, 1318.5, 1568.0];
+  // نسبة التردّد، والقوة، ومدة التلاشي لكل جزئية
+  const partials = [[1, 1, 1.1], [2.76, 0.18, 0.5], [5.4, 0.06, 0.25]];
+
+  notes.forEach((freq, i) => {
+    const at = now + i * 0.16;
+
+    for (const [ratio, level, decay] of partials) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.value = freq * ratio;
+
+      // بداية سريعة بلا طقطقة، ثم تلاشٍ أُسّي كجرس حقيقي
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(0.32 * level, at + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+
+      osc.connect(gain).connect(master);
+      osc.start(at);
+      osc.stop(at + decay + 0.05);
+    }
+  });
 }
 
 /* ============================================================

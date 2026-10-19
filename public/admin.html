@@ -126,6 +126,12 @@
           </label>
         </div>
 
+        <div class="ord-tabs" id="ordTabs" role="tablist" aria-label="نوع الطلب">
+          <button class="ord-tab is-on" type="button" data-ftype="all">الكل <i>٠</i></button>
+          <button class="ord-tab" type="button" data-ftype="delivery">دليفري <i>٠</i></button>
+          <button class="ord-tab" type="button" data-ftype="table">طاولات <i>٠</i></button>
+        </div>
+
         <div id="ordersList">
           <div class="loading-full">
             <div class="spinner"></div>
@@ -142,24 +148,43 @@
 
         <p class="pane-note">
           لكل طاولة رمز خاص بها. يُطبَع ويُلصَق على الطاولة، فيفتح
-          للزبون صفحة الطلب ويُعرِّف المطبخ برقم طاولته.
+          للزبون صفحة الطلب ويُعرِّف المطبخ برقم طاولته. وعند توليد
+          رمز لطاولة أو إعادة توليده يتعطّل أي رمز مطبوع قديم لها.
         </p>
 
-        <div class="qr-bar">
+        <div class="qr-bar qr-single">
           <label class="qr-field">
-            <span>من</span>
-            <input class="field-input" type="number" id="qrFrom" value="1" min="1" max="200">
+            <span>رقم الطاولة</span>
+            <input class="field-input" type="number" id="qrOne" value="1" min="1" max="200">
           </label>
-          <label class="qr-field">
-            <span>إلى</span>
-            <input class="field-input" type="number" id="qrTo" value="10" min="1" max="200">
-          </label>
-          <button class="btn small" type="button" id="qrMakeBtn">توليد</button>
-          <button class="btn ghost small" type="button" id="qrPrintBtn">طباعة</button>
+          <button class="btn small" type="button" id="qrOneBtn">توليد الرمز</button>
         </div>
 
         <p class="err-msg" id="qrErr" role="alert"></p>
+
         <div class="qr-grid" id="qrGrid"></div>
+
+        <dialog class="qr-dialog" id="qrDialog" aria-labelledby="qrBigTitle">
+          <div class="qr-big">
+            <p class="qr-print-brand">دهب</p>
+            <p class="qr-print-sub">شاورما و جريل</p>
+            <h3 id="qrBigTitle">طاولة</h3>
+            <div class="qr-big-img" id="qrBigImg"></div>
+            <p class="qr-print-cap">امسح الرمز لتطلب من طاولتك</p>
+            <a class="qr-big-url" id="qrBigUrl" dir="ltr" target="_blank" rel="noopener"></a>
+            <div class="qr-big-nav">
+              <button class="btn ghost small" type="button" id="qrPrev">→ الطاولة السابقة</button>
+              <button class="btn ghost small" type="button" id="qrNext">الطاولة التالية ←</button>
+            </div>
+            <div class="qr-big-acts">
+              <button class="btn small" type="button" id="qrSavePng">تنزيل PNG</button>
+              <button class="btn ghost small" type="button" id="qrSaveSvg">تنزيل SVG</button>
+              <button class="btn ghost small" type="button" id="qrPrintOne">طباعة</button>
+              <button class="btn ghost small qr-regen" type="button" id="qrRegen">إعادة توليد</button>
+              <button class="btn ghost small" type="button" id="qrClose">إغلاق</button>
+            </div>
+          </div>
+        </dialog>
       </section>
 
       <!-- ===================== الإعدادات ===================== -->
@@ -277,8 +302,8 @@
         <input type="text" class="field-input" id="secName" placeholder="مثلاً: مشروبات">
       </div>
       <div class="field">
-        <label>رمز (إيموجي اختياري)</label>
-        <input type="text" class="field-input" id="secIcon" placeholder="مثلاً: 🥤" maxlength="4">
+        <label>رمز (اختياري)</label>
+        <input type="text" class="field-input" id="secIcon" placeholder="" maxlength="4">
       </div>
       <div class="modal-actions">
         <button class="btn ghost small" onclick="closeModal('sectionModal')">إلغاء</button>

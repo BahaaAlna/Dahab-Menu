@@ -1,5 +1,5 @@
 /* ============================================================
-   👋  صفحة الترحيب
+     صفحة الترحيب
 
    مكتوبة للموبايل أولاً (mobile first): جميع القواعد أدناه هي
    تنسيق الموبايل، وتُستعمل media queries بـ min-width فقط لتحسين
@@ -187,8 +187,8 @@
 
 .scan-box {
   width: 100%;
-  max-width: 340px;
-  padding: 28px 22px 22px;
+  max-width: 295px;
+  padding: 22px 18px 18px;
   text-align: center;
 }
 

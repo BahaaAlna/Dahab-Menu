@@ -1,17 +1,17 @@
 rules_version = '2';
 
 /* ============================================================
-   🔒  قواعد الحماية — وهي الحماية الحقيقية الوحيدة في المشروع
+     قواعد الحماية — وهي الحماية الحقيقية الوحيدة في المشروع
    الموقع كله ملفات ساكنة، فلا يوجد خادم يحمي شيئاً.
    كل شيء ممنوع افتراضياً، ولا يُسمح إلا بما هو مكتوب أدناه.
 
    النشر:  firebase deploy --only firestore:rules
 
-   ✅ لوحة الإدارة تدخل الآن بحساب موظف حقيقي (بريد وكلمة مرور)
+    لوحة الإدارة تدخل الآن بحساب موظف حقيقي (بريد وكلمة مرور)
       من Firebase Authentication، لا بـ signInAnonymously، ولم يعد
       في الكود أي كلمة مرور.
 
-   ⚠️  يجب أن يكون UID حساب الموظف مذكوراً في isStaff() أدناه، وإلا
+     يجب أن يكون UID حساب الموظف مذكوراً في isStaff() أدناه، وإلا
       تعذّر على أي أحد تعديل قائمة الطعام أو مفاتيح الميزات.
    ============================================================ */
 
@@ -58,17 +58,31 @@ service cloud.firestore {
         && c.name is string && c.name.size() > 0 && c.name.size() <= 60;
     }
 
+    /* ---------- مفتاح الطاولة ----------
+       لكل طاولة وثيقة في «tables» تحمل مفتاحاً سرّياً يدخل في رابط
+       رمزها. إعادة توليد الرمز تبدّل المفتاح، فيتعطّل الرمز القديم
+       فوراً. وما لا وثيقة له (طاولة لم يُولَّد لها رمز بعد) يبقى على
+       حاله دون مفتاح، كي لا تتعطّل رموز مطبوعة قبل هذه الميزة. */
+    function tableKeyOk(d) {
+      let ref = /databases/$(database)/documents/tables/$(string(d.table));
+      return !exists(ref)
+        || ('tableKey' in d && d.tableKey == get(ref).data.token);
+    }
+
     function isValidOrder() {
       let d = request.resource.data;
       return d.keys().hasAll(['type', 'items', 'total', 'status', 'createdAt'])
         // لا خانة uid: لا حسابات في الموقع، وكل طلب طلبُ ضيف
-        && d.keys().hasOnly(['type', 'table', 'items', 'total', 'status', 'createdAt', 'customer', 'note'])
+        && d.keys().hasOnly(['type', 'table', 'items', 'total', 'status', 'createdAt', 'customer', 'note', 'tableKey'])
         && d.type in ['delivery', 'table']
         && d.status == 'new'
         && d.createdAt == request.time
         && d.items is list && d.items.size() > 0 && d.items.size() <= 50
         && d.total is number && d.total >= 0 && d.total < 10000000
-        && (d.type != 'table' || (d.table is number && d.table > 0 && d.table <= 200))
+        && (d.type != 'table' || (d.table is int && d.table > 0 && d.table <= 200))
+        && (d.type != 'table' || tableKeyOk(d))
+        && (d.type == 'table' || !('tableKey' in d))
+        && (!('tableKey' in d) || (d.tableKey is string && d.tableKey.size() <= 64))
         && (d.type != 'table' || !('customer' in d) || isValidTableCustomer(d.customer))
         && (d.type != 'delivery' || isValidCustomer(d.customer))
         // خانة الطاولة لطلب الطاولة وحده
@@ -99,7 +113,7 @@ service cloud.firestore {
        الطلب مفتوح بلا تسجيل دخول: يكتب الزبون اسمه ورقمه وعنوانه
        في نافذة التأكيد ويُرسل. والشكل وحده هو ما يُتحقَّق منه.
 
-       ⚠️  وهذا يعني أن إنشاء الطلب مكشوف للعلن: الموقع ملفات ساكنة
+         وهذا يعني أن إنشاء الطلب مكشوف للعلن: الموقع ملفات ساكنة
           ومفتاح الـ API ظاهر فيها، فيستطيع أي أحد مناداة Firestore
           مباشرة وإغراق المجموعة بطلبات وهمية مطابقة للشكل. لا تمنع
           القواعد ذلك، لأن المطلوب طلب بلا هويّة. وما يحدّ منه:
@@ -111,6 +125,13 @@ service cloud.firestore {
     match /orders/{id} {
       allow create: if isValidOrder();
       allow read, update, delete: if isStaff();
+    }
+
+    /* ---------- مفاتيح الطاولات ----------
+       سرّية: الموظف وحده يقرأ ويكتب. والقاعدة أعلاه تقرأها بـ get()
+       دون أن يُتاح للزبون قراءتها. */
+    match /tables/{id} {
+      allow read, write: if isStaff();
     }
 
     /* ---------- مفاتيح تشغيل الميزات ----------
