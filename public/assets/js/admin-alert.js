@@ -107,7 +107,7 @@ function notify(order) {
 
   const where = order?.type === "table"
     ? "طاولة " + (order.table ?? "؟")
-    : "دليفري";
+    : "توصيل";
 
   try {
     const n = new Notification("طلب جديد — " + where, {

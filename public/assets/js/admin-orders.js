@@ -95,7 +95,7 @@ function headHtml(o) {
   // الطاولة أهم ما في طلبها، والاسم أهم ما في طلب الدليفري
   const where = o.type === "table"
     ? '<span class="ord-where is-table">طاولة ' + arabicNum(o.table ?? "؟") + "</span>"
-    : '<span class="ord-where">دليفري</span>';
+    : '<span class="ord-where">توصيل</span>';
 
   const st = statusOf(o.status);
   const ms = o.createdAt?.toMillis?.();

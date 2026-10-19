@@ -119,8 +119,13 @@ export function mountQr() {
     },
     (err) => {
       console.error("tables error:", err);
+      // الرمز يُعرَض مع الرسالة: permission-denied غير unavailable،
+      // والعلاج مختلف في الحالتين
       errEl.textContent =
-        "تعذّر تحميل الرموز. تأكّد من نشر قواعد Firestore ومن أن حسابك مذكور في isStaff().";
+        "تعذّر تحميل الرموز (" + (err?.code || "unknown") + "). " +
+        (err?.code === "permission-denied"
+          ? "تأكّد من نشر قواعد Firestore ومن أن حسابك مذكور في isStaff()."
+          : "تحقّق من الاتصال بالإنترنت وأعد تحميل الصفحة.");
     }
   );
 
