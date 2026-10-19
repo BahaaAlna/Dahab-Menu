@@ -79,6 +79,8 @@ service cloud.firestore {
         && d.createdAt == request.time
         && d.items is list && d.items.size() > 0 && d.items.size() <= 50
         && d.total is number && d.total >= 0 && d.total < 10000000
+        // أقل مجموع لطلب التوصيل: 200 ل.س (ويتكرّر في config.js)
+        && (d.type != 'delivery' || d.total >= 200)
         && (d.type != 'table' || (d.table is int && d.table > 0 && d.table <= 200))
         && (d.type != 'table' || tableKeyOk(d))
         && (d.type == 'table' || !('tableKey' in d))

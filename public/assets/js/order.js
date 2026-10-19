@@ -16,6 +16,7 @@
 
 import { mountOrderPage } from "./order-core.js";
 import { normalizePhone } from "./utils.js";
+import { MIN_DELIVERY_TOTAL, CURRENCY } from "./config.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -25,6 +26,13 @@ await mountOrderPage({
   feature: "delivery",
 
   buildOrder({ items, total }) {
+    if (total < MIN_DELIVERY_TOTAL) {
+      return {
+        error: "الحد الأدنى لطلب التوصيل " + MIN_DELIVERY_TOTAL + " " + CURRENCY +
+          "، ومجموع طلبك " + total + " " + CURRENCY + ". يُرجى إضافة أصناف أخرى.",
+      };
+    }
+
     // الاسم والرقم شرط الطلب: بهما وحدهما نؤكّده ونصل إلى صاحبه
     const name = $("coName").value.trim();
     if (!name) return { error: "يُرجى كتابة الاسم." };

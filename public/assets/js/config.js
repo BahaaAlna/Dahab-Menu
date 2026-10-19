@@ -18,6 +18,10 @@ export const COLLECTIONS = {
   items: "menu_items",
 };
 
+/** أقل مجموع يُقبل لطلب التوصيل (بالليرة). ويتكرّر الرقم نفسه في
+ *  firestore.rules، فهناك تُفرَض القاعدة فعلاً، وهنا تُعرَض للزبون. */
+export const MIN_DELIVERY_TOTAL = 200;
+
 /** العملة المعروضة بجانب السعر */
 export const CURRENCY = "ل.س";
 
