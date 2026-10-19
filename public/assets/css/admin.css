@@ -1216,11 +1216,21 @@
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
 }
 
-.qr-regen {
-  width: 100%;
+.qr-card-acts {
+  display: flex;
+  gap: 6px;
   margin-top: 10px;
+}
+
+.qr-regen,
+.qr-del {
+  flex: 1;
   color: var(--red);
   border-color: rgba(239, 68, 68, 0.45);
+}
+
+.qr-del {
+  flex: none;
 }
 
 .qr-card:focus-visible {
@@ -1488,7 +1498,7 @@
   color: rgba(245, 240, 230, 0.60);
 }
 
-.qr-big-acts .qr-regen {
-  width: auto;
-  margin-top: 0;
+.qr-big-acts .qr-regen,
+.qr-big-acts .qr-del {
+  flex: none;
 }

@@ -20,7 +20,7 @@
    ============================================================ */
 
 import {
-  db, collection, doc, setDoc, updateDoc,
+  db, collection, doc, setDoc, updateDoc, deleteDoc,
   query, orderBy, onSnapshot, serverTimestamp,
 } from "./firebase.js";
 
@@ -94,8 +94,12 @@ export function mountQr() {
             'aria-label="عرض رمز الطاولة ' + r.n + '">' +
           '<div class="qr-img">' + svg + "</div>" +
           '<figcaption class="qr-cap"><b>طاولة ' + arabicNum(r.n) + "</b></figcaption>" +
-          '<button class="btn ghost small qr-regen" type="button" data-regen="' + r.n + '">' +
-            "إعادة توليد</button>" +
+          '<div class="qr-card-acts">' +
+            '<button class="btn ghost small qr-regen" type="button" data-regen="' + r.n + '">' +
+              "إعادة توليد</button>" +
+            '<button class="btn ghost small qr-del" type="button" data-del="' + r.n + '">' +
+              "حذف</button>" +
+          "</div>" +
         "</figure>";
       }));
     } catch (err) {
@@ -178,6 +182,22 @@ export function mountQr() {
     }
   }
 
+  /** حذف رمز الطاولة: تُمحى وثيقتها فتعود طاولة بلا مفتاح */
+  async function remove(n) {
+    errEl.textContent = "";
+
+    if (!confirm("هل أنت متأكد من حذف رمز الطاولة " + arabicNum(n) + "؟ " +
+        "سيختفي من القائمة. وبعد الحذف تعود الطاولة بلا مفتاح، فيعمل أي رمز مطبوع لها " +
+        "إلى أن تولّد رمزاً جديداً.")) return;
+
+    try {
+      await deleteDoc(doc(db, "tables", String(n)));
+    } catch (err) {
+      console.error("delete error:", err);
+      errEl.textContent = "تعذّر حذف الرمز. يُرجى إعادة المحاولة.";
+    }
+  }
+
   $("qrOneBtn").addEventListener("click", generate);
   $("qrOne").addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); });
 
@@ -211,12 +231,17 @@ export function mountQr() {
       regenerate(Number(regen.dataset.regen));
       return;
     }
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      remove(Number(del.dataset.del));
+      return;
+    }
     const card = e.target.closest(".qr-card");
     if (card) showOne(Number(card.dataset.n));
   });
 
   grid.addEventListener("keydown", (e) => {
-    if (e.target.closest("[data-regen]")) return;
+    if (e.target.closest("[data-regen], [data-del]")) return;
     if (e.key === "Enter" || e.key === " ") {
       const card = e.target.closest(".qr-card");
       if (card) {
@@ -236,6 +261,7 @@ export function mountQr() {
   $("qrPrev").addEventListener("click", () => step(-1));
   $("qrNext").addEventListener("click", () => step(1));
   $("qrRegen").addEventListener("click", () => current && regenerate(current.n));
+  $("qrDel").addEventListener("click", () => current && remove(current.n));
   $("qrClose").addEventListener("click", () => dlg.close());
   dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
 
