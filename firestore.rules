@@ -145,6 +145,21 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    /* ---------- أجهزة الموظفين لإشعارات Push ----------
+       معرّف الوثيقة هو رمز الجهاز من FCM. يكتبها الموظف لنفسه من
+       اللوحة، ويقرؤها عامل الإشعارات بحساب خدمة لا تمرّ به القواعد. */
+    match /admin_tokens/{token} {
+      allow read, delete: if isStaff();
+      allow create, update: if isStaff()
+        && request.resource.data.keys().hasOnly(['uid', 'ua', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.ua is string && request.resource.data.ua.size() <= 200
+        && request.resource.data.createdAt == request.time;
+    }
+
+    /* push_log: سجلّ ما أُرسل عنه إشعار، كي لا يتكرّر. يكتبه العامل
+       وحده بحساب الخدمة، فيبقى مغلقاً على الجميع بالقاعدة أدناه. */
+
     /* ---------- ما عدا ذلك: مرفوض ---------- */
     match /{document=**} {
       allow read, write: if false;

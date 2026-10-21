@@ -8,3 +8,8 @@ Thumbs.db
 *.log
 .env
 .vscode/
+
+# مفتاح حساب الخدمة لعامل الإشعارات — سرّ لا يُرفع أبداً
+*service-account*.json
+*firebase-adminsdk*.json
+.wrangler/

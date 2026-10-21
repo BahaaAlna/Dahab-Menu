@@ -155,6 +155,47 @@ gh run watch
 
 ---
 
+##  إشعارات الطلبات (Push)
+
+تصل إلى جوال الموظف أو كمبيوتره عند كل طلب جديد، **حتى واللوحة مغلقة**.
+الموقع ملفات ساكنة، لذلك يُرسل الإشعار عاملٌ صغير مجاني على Cloudflare
+([`workers/push`](workers/push/src/index.js)): صفحة الزبون تبلّغه بمعرّف الطلب،
+فيقرأ الطلب من Firestore بنفسه ثم يرسل الإشعار إلى الأجهزة المسجّلة.
+
+**الإعداد (مرّة واحدة):**
+
+1. **مفتاح VAPID:** Firebase Console ← Project settings ← Cloud Messaging ←
+   Web Push certificates ← **Generate key pair**. انسخ المفتاح إلى `PUSH.vapidKey`
+   في [`config.js`](public/assets/js/config.js).
+2. **حساب الخدمة:** Project settings ← Service accounts ← **Generate new private key**.
+   يُنزَّل ملف JSON. **هذا الملف سرّ، فلا تضعه في المستودع.**
+3. **حساب Cloudflare** مجاني، ثم من التيرمنال:
+   ```bash
+   npx wrangler login
+   ```
+   ```bash
+   npm run push:deploy
+   ```
+   ```powershell
+   Get-Content -Raw "C:\path\to\key.json" | npm run push:secret
+   ```
+   الأمر الأخير يمرّر ملف JSON كاملاً إلى Cloudflare. لا تلصقه يدوياً،
+   لأن الملف متعدّد الأسطر وقد لا يُقرأ إلا سطره الأول.
+4. انسخ رابط العامل الذي ظهر بعد النشر (`https://dahab-push.<اسمك>.workers.dev`)
+   إلى `PUSH.endpoint` في `config.js`.
+5. انشر القواعد، ثم ارفع الكود:
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+6. من كل جهاز يريد التنبيه: افتح اللوحة واضغط **فعّل التنبيه** ووافق على الإذن.
+
+> **الآيفون:** لا يقبل Push إلا إذا أُضيفت اللوحة إلى الشاشة الرئيسية
+> (مشاركة ← إضافة إلى الشاشة الرئيسية) وفُتحت من هناك. أندرويد والكمبيوتر يعملان مباشرة.
+
+لمتابعة ما يفعله العامل لحظةً بلحظة: `npm run push:logs`
+
+---
+
 ##  مفاتيح الميزات قيد التطوير
 
 ميزتا **«طلب دليفري»** و**«طلب من الطاولة»** محكومتان بمفتاحين في

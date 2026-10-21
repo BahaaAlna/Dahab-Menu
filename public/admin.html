@@ -6,6 +6,9 @@
   <title>دهب | لوحة الإدارة</title>
 
   <link rel="icon" href="assets/img/logo.png">
+  <!-- الآيفون لا يقبل إشعارات Push إلا من تطبيق ويب على الشاشة الرئيسية -->
+  <link rel="manifest" href="admin.webmanifest">
+  <link rel="apple-touch-icon" href="assets/img/logo.png">
 
   <!-- الاتصال بخوادم Firebase يبدأ مع الـ HTML لا بعد تحميل الـ JS،
        فيُوفَّر على الصفحة بحث DNS ومصافحة TLS عند أول نداء -->
@@ -116,7 +119,7 @@
           <svg class="ic" aria-hidden="true"><use href="assets/img/icons.svg#bell"></use></svg>
           <div class="alert-text">
             <b>نبّهني عند وصول طلب</b>
-            <small>صوت وإشعار، فلا يضيع طلب واللوحة مفتوحة على الشاشة.</small>
+            <small>صوت وإشعار على هذا الجهاز، يصل حتى واللوحة مغلقة.</small>
           </div>
           <button class="btn small" type="button" id="alertAllowBtn">فعّل التنبيه</button>
           <button class="btn ghost small" type="button" id="alertLaterBtn">ليس الآن</button>

@@ -1,0 +1,10 @@
+# عامل إشعارات الطلبات — يُنشر على Cloudflare Workers (الخطة المجانية)
+#   أول مرّة:  npx wrangler login
+#   النشر:     npm run push:deploy
+#   السرّ:     npm run push:secret   (يُلصق فيه ملف حساب الخدمة كاملاً)
+name = "dahab-push"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[observability]
+enabled = true

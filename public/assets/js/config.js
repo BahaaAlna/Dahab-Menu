@@ -12,6 +12,17 @@ export const firebaseConfig = {
   appId: "1:67793665080:web:3160688f3e58c2369d3acd",
 };
 
+/** إشعارات Push للوحة الإدارة (تصل والمتصفح مغلق).
+ *  القيمتان علنيّتان ولا سرّ فيهما. وإن بقيت إحداهما فارغة
+ *  تعطّل الـ Push بصمت، وبقي تنبيه اللوحة المفتوحة كما هو.
+ *  vapidKey: Firebase Console ← Project settings ← Cloud Messaging
+ *            ← Web Push certificates ← Generate key pair
+ *  endpoint: رابط العامل بعد نشره (npm run push:deploy) */
+export const PUSH = {
+  vapidKey: "BHPAdDyx9NJzf6Lefae6pqP-SXqQWNZgiBFWFNtAqwOGXCt2YIvBv0bEgCtJlJ0bD5kluVe9q2GCij9Xya6WrRo",
+  endpoint: "https://dahab-push.dahab-hama.workers.dev",
+};
+
 /** أسماء المجموعات في Firestore */
 export const COLLECTIONS = {
   sections: "menu_sections",

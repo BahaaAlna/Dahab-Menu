@@ -17,6 +17,8 @@
    فالنقرة نفسها تُستغَل لفتح سياق الصوت وتهيئته.
    ============================================================ */
 
+import { enablePush } from "./admin-push.js";
+
 const $ = (id) => document.getElementById(id);
 
 /** يُحفظ اختيار الموظف فلا يُسأل في كل زيارة */
@@ -155,6 +157,10 @@ function showBarIfNeeded() {
 export function mountAlerts() {
   showBarIfNeeded();
 
+  /* من سمح بالإشعارات في زيارة سابقة لا يرى الشريط، فيُسجَّل
+     جهازه هنا. ولا حاجة لنقرة: الإذن ممنوح أصلاً. */
+  if ("Notification" in window && Notification.permission === "granted") enablePush();
+
   $("alertAllowBtn").addEventListener("click", async () => {
     // النقرة نفسها هي ما يُجيز الصوت وطلب الإذن معاً
     primeAudio();
@@ -172,6 +178,7 @@ export function mountAlerts() {
     hideBar();
     // نغمة تجريبية: يسمع الموظف ما سيسمعه عند كل طلب
     beep();
+    enablePush();
   });
 
   $("alertLaterBtn").addEventListener("click", () => {

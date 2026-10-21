@@ -1,0 +1,14 @@
+{
+  "name": "دهب — لوحة الإدارة",
+  "short_name": "لوحة دهب",
+  "start_url": "admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "icons": [
+    { "src": "assets/img/logo.png", "sizes": "any", "type": "image/png" }
+  ]
+}

@@ -20,7 +20,7 @@
    ============================================================ */
 
 import { db, collection, addDoc, serverTimestamp } from "./firebase.js";
-import { CURRENCY } from "./config.js";
+import { CURRENCY, PUSH } from "./config.js";
 import { subscribeMenu } from "./menu-data.js";
 import { loadCart, saveCart } from "./cart-store.js";
 import { byOrder, groupBySection, escapeHtml } from "./utils.js";
@@ -33,6 +33,24 @@ const $ = (id) => document.getElementById(id);
  *  والقاعدة: ما يُعَدّ بالعربية وما يُدفَع باللاتينية. */
 export function arabicNum(n) {
   return String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[d]);
+}
+
+/** يُبلّغ عامل الإشعارات بأن طلباً وصل، فيُرسل Push إلى أجهزة
+ *  الموظفين. لا يُنتظر ولا يُعرَض فشله: الطلب حُفظ، واللوحة المفتوحة
+ *  تراه على كل حال. والعامل لا يثق بالمعرّف، بل يقرأ الطلب بنفسه.
+ *  نصّ عادي و no-cors: طلب بسيط بلا مصافحة CORS تؤخّره.
+ *  و keepalive: يكتمل حتى لو أُغلقت الصفحة فوراً. */
+function pingPush(id) {
+  if (!PUSH.endpoint) return;
+  try {
+    fetch(PUSH.endpoint, {
+      method: "POST",
+      mode: "no-cors",
+      keepalive: true,
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+  } catch (_) {}
 }
 
 /**
@@ -427,7 +445,8 @@ export async function mountOrderPage({ feature, buildOrder }) {
     setBusy(btn, true);
 
     try {
-      await addDoc(collection(db, "orders"), order);
+      const ref = await addDoc(collection(db, "orders"), order);
+      pingPush(ref.id);
 
       // أُفرغت السلة بالكامل، فالرسم الكامل هنا في محلّه
       cart.clear();
